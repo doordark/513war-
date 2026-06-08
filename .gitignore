@@ -1,0 +1,18 @@
+# JavaFX 编译输出
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 本地数据
+scores.json
+purchased_items.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖库（体积大，不提交）
+javafx-sdk-21/

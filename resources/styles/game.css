@@ -1,0 +1,479 @@
+/* ============================================================
+   Modern Flat & Sci-Fi Style — 塔防游戏全局样式表
+   ============================================================ */
+
+/* ===== 全局根节点 ===== */
+.root {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  -fx-background-color: #0a0a1a;
+}
+
+/* ============================================================
+   主菜单
+   ============================================================ */
+
+/* 主菜单容器 */
+.main-menu {
+  -fx-background-color: transparent;
+  -fx-alignment: center;
+}
+
+/* 主标题 — 霓虹发光 */
+.main-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI";
+  -fx-font-size: 44px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #ffffff;
+  -fx-effect:
+    dropshadow(gaussian, #64b5f6, 20, 0.6, 0, 0),
+    dropshadow(gaussian, #42a5f5, 10, 0.8, 0, 0);
+}
+
+/* 副标题 */
+.main-subtitle {
+  -fx-font-family: "Segoe UI", "Microsoft YaHei";
+  -fx-font-size: 16px;
+  -fx-text-fill: #90caf9aa;
+  -fx-letter-spacing: 2px;
+}
+
+/* 底部信息 */
+.menu-footer {
+  -fx-font-size: 11px;
+  -fx-text-fill: #546e7a88;
+}
+
+/* ============================================================
+   菜单按钮 — 统一样式类
+   ============================================================ */
+
+.menu-button {
+  -fx-background-color: linear-gradient(to bottom, #1e293bcc, #0f172acc);
+  -fx-background-radius: 8;
+  -fx-border-color: #ffffff18;
+  -fx-border-radius: 8;
+  -fx-border-width: 1;
+  -fx-text-fill: #e2e8f0;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 16px;
+  -fx-font-weight: bold;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000044, 4, 0, 0, 2);
+  -fx-padding: 12 0;
+  -fx-alignment: center;
+}
+
+.menu-button:hover {
+  -fx-background-color: linear-gradient(to bottom, #334155ee, #1e293bee);
+  -fx-border-color: #64b5f6aa;
+  -fx-border-width: 1.5;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, #64b5f666, 12, 0, 0, 0);
+}
+
+.menu-button:pressed {
+  -fx-background-color: linear-gradient(to bottom, #0f172aee, #1e293bee);
+  -fx-border-color: #42a5f5;
+  -fx-effect: dropshadow(gaussian, #42a5f588, 8, 0, 0, 0);
+}
+
+/* 开始游戏按钮 */
+.menu-button-start {
+  -fx-background-color: linear-gradient(to bottom, #1565c0cc, #0d47a1cc);
+  -fx-border-color: #42a5f544;
+}
+.menu-button-start:hover {
+  -fx-background-color: linear-gradient(to bottom, #1976d2ee, #1565c0ee);
+  -fx-border-color: #64b5f6;
+}
+
+/* 继续游戏按钮 */
+.menu-button-continue {
+  -fx-background-color: linear-gradient(to bottom, #2e7d32cc, #1b5e20cc);
+  -fx-border-color: #66bb6a44;
+}
+.menu-button-continue:hover {
+  -fx-background-color: linear-gradient(to bottom, #388e3cee, #2e7d32ee);
+  -fx-border-color: #81c784;
+}
+
+/* 难度选择按钮 */
+.menu-button-difficulty {
+  -fx-background-color: linear-gradient(to bottom, #e65100cc, #bf360ccc);
+  -fx-border-color: #ff704344;
+}
+.menu-button-difficulty:hover {
+  -fx-background-color: linear-gradient(to bottom, #f4511eee, #e65100ee);
+  -fx-border-color: #ff8a65;
+}
+
+/* 游戏设置按钮 */
+.menu-button-settings {
+  -fx-background-color: linear-gradient(to bottom, #6a1b9acc, #4a148ccc);
+  -fx-border-color: #ab47bc44;
+}
+.menu-button-settings:hover {
+  -fx-background-color: linear-gradient(to bottom, #7b1fa2ee, #6a1b9aee);
+  -fx-border-color: #ce93d8;
+}
+
+/* ============================================================
+   暂停弹窗
+   ============================================================ */
+
+.pause-overlay {
+  -fx-background-color: rgba(10, 10, 26, 0.8);
+  -fx-alignment: center;
+}
+
+.pause-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 36px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, #64b5f6, 15, 0.5, 0, 0);
+}
+
+.pause-info {
+  -fx-font-size: 14px;
+  -fx-text-fill: #90caf9cc;
+}
+
+/* ============================================================
+   HUD 面板 — 磨砂玻璃风格
+   ============================================================ */
+
+.hud-panel {
+  -fx-background-color: linear-gradient(to bottom, #0f172aee, #0a0f1efa);
+  -fx-border-color: #64b5f622;
+  -fx-border-width: 1 0 0 0;
+  -fx-padding: 8 20;
+  -fx-spacing: 0;
+  -fx-alignment: center;
+}
+
+/* 状态卡片 — 磨砂玻璃 */
+.stat-card {
+  -fx-background-color: rgba(255, 255, 255, 0.04);
+  -fx-background-radius: 8;
+  -fx-border-color: rgba(255, 255, 255, 0.06);
+  -fx-border-radius: 8;
+  -fx-border-width: 1;
+  -fx-padding: 6 14;
+}
+
+/* 状态标签 */
+.stat-label {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 16px;
+  -fx-font-weight: bold;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 3, 0, 0, 1);
+}
+
+.stat-gold {
+  -fx-text-fill: #ffd54f;
+}
+
+.stat-hp {
+  -fx-text-fill: #ff5252;
+}
+
+.stat-xp {
+  -fx-text-fill: #40c4ff;
+}
+
+.stat-lives {
+  -fx-text-fill: #ff5252;
+}
+
+.stat-wave {
+  -fx-text-fill: #40c4ff;
+}
+
+.stat-score {
+  -fx-text-fill: #69f0ae;
+}
+
+.stat-level {
+  -fx-text-fill: #ffab40;
+}
+
+/* 分隔线 */
+.hud-separator {
+  -fx-background-color: #ffffff11;
+}
+
+/* ============================================================
+   防御塔购买按钮
+   ============================================================ */
+
+.tower-button {
+  -fx-background-color: linear-gradient(
+    to bottom,
+    rgba(30, 41, 59, 0.85),
+    rgba(15, 23, 42, 0.85)
+  );
+  -fx-background-radius: 10;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+  -fx-border-radius: 10;
+  -fx-border-width: 1;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000033, 4, 0, 0, 2);
+  -fx-alignment: center;
+}
+
+.tower-button:hover {
+  -fx-background-color: linear-gradient(
+    to bottom,
+    rgba(51, 65, 85, 0.9),
+    rgba(30, 41, 59, 0.9)
+  );
+  -fx-border-color: rgba(100, 181, 246, 0.5);
+  -fx-border-width: 1.5;
+  -fx-effect: dropshadow(gaussian, rgba(100, 181, 246, 0.3), 10, 0, 0, 0);
+}
+
+.tower-button:pressed {
+  -fx-background-color: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.95),
+    rgba(30, 41, 59, 0.95)
+  );
+  -fx-border-color: rgba(66, 165, 245, 0.8);
+}
+
+.tower-button.selected {
+  -fx-border-color: #ffd54f;
+  -fx-border-width: 2;
+  -fx-effect: dropshadow(gaussian, rgba(255, 213, 79, 0.4), 12, 0, 0, 0);
+}
+
+/* 快捷键标签 */
+.tower-key {
+  -fx-font-family: "Segoe UI", "Microsoft YaHei";
+  -fx-font-size: 9px;
+  -fx-text-fill: rgba(255, 255, 255, 0.35);
+  -fx-font-weight: bold;
+}
+
+/* 塔名称 */
+.tower-name {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-text-fill: #e2e8f0;
+  -fx-font-weight: bold;
+}
+
+/* 价格标签 */
+.tower-cost {
+  -fx-font-family: "Segoe UI", "Microsoft YaHei";
+  -fx-font-size: 11px;
+  -fx-text-fill: #ffd54f;
+  -fx-font-weight: bold;
+}
+
+/* ============================================================
+   选中塔信息面板
+   ============================================================ */
+
+.tower-info-panel {
+  -fx-background-color: rgba(40, 40, 60, 0.9);
+  -fx-background-radius: 12;
+  -fx-border-color: rgba(100, 150, 255, 0.2);
+  -fx-border-radius: 12;
+  -fx-border-width: 1;
+}
+
+.tower-info-name {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 14px;
+  -fx-text-fill: #e0e8ff;
+  -fx-font-weight: bold;
+}
+
+.tower-info-stats {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-text-fill: #a0b0d0;
+}
+
+/* 升级按钮 */
+.btn-upgrade {
+  -fx-background-color: linear-gradient(to bottom, #43a047, #2e7d32);
+  -fx-background-radius: 6;
+  -fx-text-fill: white;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-font-weight: bold;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+}
+.btn-upgrade:hover {
+  -fx-background-color: linear-gradient(to bottom, #66bb6a, #43a047);
+  -fx-effect: dropshadow(gaussian, #43a04766, 8, 0, 0, 0);
+}
+.btn-upgrade:disabled {
+  -fx-background-color: #555555;
+  -fx-text-fill: #888888;
+  -fx-cursor: default;
+  -fx-effect: none;
+}
+
+/* 出售按钮 */
+.btn-sell {
+  -fx-background-color: linear-gradient(to bottom, #e53935, #c62828);
+  -fx-background-radius: 6;
+  -fx-text-fill: white;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-font-weight: bold;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+}
+.btn-sell:hover {
+  -fx-background-color: linear-gradient(to bottom, #ef5350, #e53935);
+  -fx-effect: dropshadow(gaussian, #e5393566, 8, 0, 0, 0);
+}
+
+/* 取消放置按钮 */
+.btn-cancel-placement {
+  -fx-background-color: linear-gradient(to bottom, #ff9800, #f57c00);
+  -fx-background-radius: 8;
+  -fx-text-fill: white;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 13px;
+  -fx-font-weight: bold;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+}
+.btn-cancel-placement:hover {
+  -fx-background-color: linear-gradient(to bottom, #ffb74d, #ff9800);
+  -fx-effect: dropshadow(gaussian, #ff980066, 8, 0, 0, 0);
+}
+
+/* 下一波按钮 */
+.btn-next-wave {
+  -fx-background-color: linear-gradient(to bottom, #78909c, #546e7a);
+  -fx-background-radius: 8;
+  -fx-text-fill: white;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 13px;
+  -fx-font-weight: bold;
+  -fx-cursor: default;
+  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+}
+.btn-next-wave-ready {
+  -fx-background-color: linear-gradient(to bottom, #66bb6a, #43a047) !important;
+  -fx-cursor: hand !important;
+  -fx-effect: dropshadow(gaussian, #43a04766, 6, 0, 0, 1) !important;
+}
+.btn-next-wave-ready:hover {
+  -fx-background-color: linear-gradient(to bottom, #81c784, #66bb6a) !important;
+  -fx-effect: dropshadow(gaussian, #43a047aa, 10, 0, 0, 0) !important;
+}
+.btn-next-wave-disabled {
+  -fx-opacity: 0.5;
+  -fx-cursor: default;
+}
+
+/* ============================================================
+   难度选择
+   ============================================================ */
+
+.difficulty-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 36px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, #64b5f6, 15, 0.5, 0, 0);
+}
+
+.difficulty-button {
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-border-width: 1;
+  -fx-text-fill: #ffffff;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 16px;
+  -fx-font-weight: bold;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, #00000033, 5, 0, 0, 2);
+}
+.difficulty-button:hover {
+  -fx-border-color: rgba(255, 255, 255, 0.5);
+  -fx-border-width: 2;
+  -fx-effect: dropshadow(gaussian, rgba(100, 181, 246, 0.4), 12, 0, 0, 0);
+}
+
+.difficulty-desc {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-text-fill: rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================================
+   设置面板
+   ============================================================ */
+
+.settings-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 36px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, #64b5f6, 15, 0.5, 0, 0);
+}
+
+.settings-label {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 16px;
+  -fx-font-weight: bold;
+  -fx-text-fill: rgba(200, 210, 255, 0.9);
+}
+
+.settings-hint {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 12px;
+  -fx-text-fill: rgba(100, 100, 120, 0.5);
+}
+
+.back-button {
+  -fx-background-color: rgba(30, 30, 50, 0.8);
+  -fx-background-radius: 8;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+  -fx-border-radius: 8;
+  -fx-border-width: 1;
+  -fx-text-fill: #ffffff;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 14px;
+  -fx-cursor: hand;
+}
+.back-button:hover {
+  -fx-background-color: rgba(50, 50, 80, 0.9);
+  -fx-border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================
+   游戏结束 / 胜利
+   ============================================================ */
+
+.gameover-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 48px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #ef5350;
+  -fx-effect: dropshadow(gaussian, #ef535099, 12, 0, 0, 0);
+}
+
+.victory-title {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 48px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #66bb6a;
+  -fx-effect: dropshadow(gaussian, #66bb6a99, 12, 0, 0, 0);
+}
+
+.score-text {
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 20px;
+  -fx-text-fill: #ffd54f;
+}

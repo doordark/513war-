@@ -1,0 +1,5 @@
+package enums;
+
+public enum GameState {
+    MENU, DIFFICULTY_SELECT, SETTINGS, SHOP, LEADERBOARD, PLAYING, PAUSED, GAME_OVER, VICTORY
+}
