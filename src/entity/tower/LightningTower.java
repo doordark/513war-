@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 public class LightningTower extends Tower {
 
     public LightningTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "lightning");
         this.name = "闪电塔";
         this.buyCost = 260;
         this.upgradeCosts = new int[]{200, 300};

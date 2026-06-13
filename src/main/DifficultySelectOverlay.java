@@ -13,7 +13,8 @@ import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
 /**
- * 难度选择面板 — JavaFX 组件，匹配主菜单风格
+ * 难度选择面板 — 设置面板，选择后点保存返回主菜单
+ * 流程：选难度（高亮）→ 点保存 → 返回主菜单 → 开始游戏用保存的难度
  */
 public class DifficultySelectOverlay extends StackPane {
 
@@ -22,18 +23,27 @@ public class DifficultySelectOverlay extends StackPane {
 
     private final GamePanel gamePanel;
 
-    // 背景层（预留接口）
     private Pane backgroundLayer;
-
-    // UI 层
     private VBox uiLayer;
 
-    // 按钮
     private Button easyBtn;
     private Button normalBtn;
     private Button hardBtn;
     private Button nightmareBtn;
+    private Button saveBtn;
     private Button backBtn;
+
+    // 当前选中的难度（高亮）
+    private int selectedIndex = 1; // 默认普通
+
+    private final String[] colorNormal = {"#48bb78", "#4299e1", "#ed8936", "#e53e3e"};
+    private final String[] colorHover  = {"#38a169", "#3182ce", "#dd6b20", "#c53030"};
+    private final String[] colorNames  = {"简单", "普通", "困难", "噩梦"};
+    private final String[] colorDescs  = {"HP×1.0  速度×0.8", "HP×1.0  速度×1.0", "HP×1.5  速度×1.2", "HP×2.0  速度×1.5"};
+    private final GameSettings.Difficulty[] difficulties = {
+        GameSettings.Difficulty.EASY, GameSettings.Difficulty.NORMAL,
+        GameSettings.Difficulty.HARD, GameSettings.Difficulty.NIGHTMARE
+    };
 
     public DifficultySelectOverlay(GamePanel gamePanel) {
         this.gamePanel = gamePanel;
@@ -43,79 +53,75 @@ public class DifficultySelectOverlay extends StackPane {
         setVisible(false);
         setManaged(false);
 
-        // 加载 CSS
         String cssPath = getClass().getResource("/styles/game.css").toExternalForm();
         getStylesheets().add(cssPath);
 
-        // ===== 背景层（预留接口） =====
         backgroundLayer = new Pane();
         backgroundLayer.setPrefSize(WIDTH, HEIGHT);
         backgroundLayer.setMinSize(WIDTH, HEIGHT);
         backgroundLayer.setMaxSize(WIDTH, HEIGHT);
         backgroundLayer.setStyle("-fx-background-color: #0a0a1e;");
 
-        // ===== UI 层 =====
         uiLayer = new VBox();
         uiLayer.setPrefSize(WIDTH, HEIGHT);
         uiLayer.setAlignment(Pos.TOP_CENTER);
         uiLayer.setPadding(new Insets(0));
         uiLayer.setSpacing(0);
 
+        // 左上角返回按钮
+        backBtn = createBackButton("← 返回", e -> returnToMenu());
+        StackPane topBar = new StackPane();
+        topBar.setPrefSize(WIDTH, 60);
+        StackPane.setAlignment(backBtn, Pos.TOP_LEFT);
+        backBtn.setTranslateX(20);
+        backBtn.setTranslateY(15);
+        topBar.getChildren().add(backBtn);
+
         // 标题
         VBox titleArea = new VBox();
         titleArea.setAlignment(Pos.CENTER);
-        titleArea.setPadding(new Insets(50, 0, 30, 0));
+        titleArea.setPadding(new Insets(30, 0, 20, 0));
 
         Label titleLabel = new Label("选择难度");
         titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 42));
         titleLabel.setTextFill(Color.WHITE);
         titleLabel.setEffect(new DropShadow(4, 0, 2, Color.color(0, 0, 0, 0.35)));
-
-        // 标题呼吸动画
         setupTitleAnimation(titleLabel);
         titleArea.getChildren().add(titleLabel);
 
-        // 按钮列表
+        Label hintLabel = new Label("选择难度后点击保存");
+        hintLabel.setFont(Font.font("Microsoft YaHei", 14));
+        hintLabel.setTextFill(Color.color(1, 1, 1, 0.5));
+        titleArea.getChildren().add(hintLabel);
+
+        // 难度按钮列表
         VBox btnBox = new VBox();
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setSpacing(14);
-        btnBox.setPadding(new Insets(0, 0, 30, 0));
+        btnBox.setPadding(new Insets(10, 0, 20, 0));
 
-        easyBtn = createDiffButton("简单", "HP×1.0  速度×0.8", "#48bb78", "#38a169", e -> {
-            gamePanel.getSettings().setDifficulty(GameSettings.Difficulty.EASY);
-            System.out.println("[设置] 难度=简单");
-            startGame();
-        });
-
-        normalBtn = createDiffButton("普通", "HP×1.0  速度×1.0", "#4299e1", "#3182ce", e -> {
-            gamePanel.getSettings().setDifficulty(GameSettings.Difficulty.NORMAL);
-            System.out.println("[设置] 难度=普通");
-            startGame();
-        });
-
-        hardBtn = createDiffButton("困难", "HP×1.5  速度×1.2", "#ed8936", "#dd6b20", e -> {
-            gamePanel.getSettings().setDifficulty(GameSettings.Difficulty.HARD);
-            System.out.println("[设置] 难度=困难");
-            startGame();
-        });
-
-        nightmareBtn = createDiffButton("噩梦", "HP×2.0  速度×1.5", "#e53e3e", "#c53030", e -> {
-            gamePanel.getSettings().setDifficulty(GameSettings.Difficulty.NIGHTMARE);
-            System.out.println("[设置] 难度=噩梦");
-            startGame();
-        });
+        easyBtn = createDiffButton(0);
+        normalBtn = createDiffButton(1);
+        hardBtn = createDiffButton(2);
+        nightmareBtn = createDiffButton(3);
 
         btnBox.getChildren().addAll(easyBtn, normalBtn, hardBtn, nightmareBtn);
 
-        // 返回按钮
-        backBtn = createBackButton("← 返回", e -> returnToMenu());
+        // 保存按钮（默认隐藏）
+        saveBtn = createSaveButton("保存", e -> {
+            GameSettings.Difficulty chosen = difficulties[selectedIndex];
+            gamePanel.getSettings().setDifficulty(chosen);
+            System.out.println("[难度设置] 已保存: " + colorNames[selectedIndex]);
+            returnToMenu();
+        });
+        saveBtn.setVisible(false);
+        saveBtn.setManaged(false);
 
-        uiLayer.getChildren().addAll(titleArea, btnBox, backBtn);
+        uiLayer.getChildren().addAll(topBar, titleArea, btnBox, saveBtn);
 
         getChildren().addAll(backgroundLayer, uiLayer);
     }
 
-    /** 标题呼吸发光特效 */
     private void setupTitleAnimation(Label titleLabel) {
         DropShadow shadow = new DropShadow();
         shadow.setColor(Color.color(0.1, 0.3, 0.6, 0.5));
@@ -137,9 +143,12 @@ public class DifficultySelectOverlay extends StackPane {
         anim.play();
     }
 
-    /** 创建难度按钮 */
-    private Button createDiffButton(String name, String desc, String colorNormal, String colorHover,
-                                    javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
+    private Button createDiffButton(int index) {
+        String name = colorNames[index];
+        String desc = colorDescs[index];
+        String colorNormal = this.colorNormal[index];
+        String colorHover = this.colorHover[index];
+
         VBox content = new VBox();
         content.setAlignment(Pos.CENTER);
         content.setSpacing(4);
@@ -159,21 +168,19 @@ public class DifficultySelectOverlay extends StackPane {
         btn.setGraphic(content);
         btn.setCursor(javafx.scene.Cursor.HAND);
 
-        // 渐变背景
-        btn.setStyle(String.format(
+        String defaultStyle = String.format(
             "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
             "-fx-background-radius: 14; " +
             "-fx-border-color: rgba(255,255,255,0.2); " +
             "-fx-border-radius: 14; " +
             "-fx-border-width: 1; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0, 0, 3);",
-            colorNormal, colorHover));
+            colorNormal, colorHover);
+        btn.setStyle(defaultStyle);
 
-        // 初始状态（入场动画用）
         btn.setOpacity(0);
         btn.setTranslateY(20);
 
-        // 悬停动画
         ScaleTransition scaleUp = new ScaleTransition(Duration.millis(180), btn);
         scaleUp.setToX(1.06);
         scaleUp.setToY(1.06);
@@ -182,29 +189,145 @@ public class DifficultySelectOverlay extends StackPane {
         scaleDown.setToX(1.0);
         scaleDown.setToY(1.0);
 
+        final int finalIndex = index;
+
         btn.setOnMouseEntered(e -> {
             scaleDown.stop();
-            btn.setStyle(String.format(
-                "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
-                "-fx-background-radius: 14; " +
-                "-fx-border-color: rgba(255,255,255,0.4); " +
-                "-fx-border-radius: 14; " +
-                "-fx-border-width: 1.5; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 4);",
-                lightenColor(colorNormal), colorNormal));
+            if (finalIndex == selectedIndex) {
+                // 已选中状态，保持金色边框
+                applySelectedStyle(btn, finalIndex);
+            } else {
+                btn.setStyle(String.format(
+                    "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
+                    "-fx-background-radius: 14; " +
+                    "-fx-border-color: rgba(255,255,255,0.4); " +
+                    "-fx-border-radius: 14; " +
+                    "-fx-border-width: 1.5; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 4);",
+                    lightenColor(colorNormal), colorNormal));
+            }
             scaleUp.playFromStart();
         });
 
         btn.setOnMouseExited(e -> {
             scaleUp.stop();
-            btn.setStyle(String.format(
-                "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
-                "-fx-background-radius: 14; " +
-                "-fx-border-color: rgba(255,255,255,0.2); " +
-                "-fx-border-radius: 14; " +
+            if (finalIndex == selectedIndex) {
+                applySelectedStyle(btn, finalIndex);
+            } else {
+                btn.setStyle(defaultStyle);
+            }
+            scaleDown.playFromStart();
+        });
+
+        // 点击选择难度（高亮 + 显示保存按钮）
+        btn.setOnAction(e -> selectDifficulty(finalIndex));
+
+        return btn;
+    }
+
+    /** 选中某个难度 */
+    private void selectDifficulty(int index) {
+        selectedIndex = index;
+        System.out.println("[难度设置] 已选中: " + colorNames[index]);
+
+        Button[] buttons = {easyBtn, normalBtn, hardBtn, nightmareBtn};
+        for (int i = 0; i < buttons.length; i++) {
+            if (i == index) {
+                applySelectedStyle(buttons[i], i);
+            } else {
+                applyNormalStyle(buttons[i], i);
+            }
+        }
+
+        // 显示保存按钮
+        saveBtn.setVisible(true);
+        saveBtn.setManaged(true);
+        saveBtn.setOpacity(0);
+        saveBtn.setTranslateY(15);
+
+        ParallelTransition pt = new ParallelTransition();
+        FadeTransition fade = new FadeTransition(Duration.millis(300), saveBtn);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        TranslateTransition trans = new TranslateTransition(Duration.millis(300), saveBtn);
+        trans.setFromY(15);
+        trans.setToY(0);
+        pt.getChildren().addAll(fade, trans);
+        pt.play();
+    }
+
+    /** 金色高亮样式 */
+    private void applySelectedStyle(Button btn, int index) {
+        btn.setStyle(String.format(
+            "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
+            "-fx-background-radius: 14; " +
+            "-fx-border-color: #ffd700; " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-width: 2.5; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.4), 12, 0, 0, 4);",
+            lightenColor(colorNormal[index]), colorNormal[index]));
+    }
+
+    /** 普通样式 */
+    private void applyNormalStyle(Button btn, int index) {
+        btn.setStyle(String.format(
+            "-fx-background-color: linear-gradient(to bottom, %s, %s); " +
+            "-fx-background-radius: 14; " +
+            "-fx-border-color: rgba(255,255,255,0.2); " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0, 0, 3);",
+            colorNormal[index], colorHover[index]));
+    }
+
+    /** 保存按钮 */
+    private Button createSaveButton(String text, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
+        Button btn = new Button(text);
+        btn.setPrefSize(200, 50);
+        btn.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 18));
+        btn.setTextFill(Color.WHITE);
+        btn.setCursor(javafx.scene.Cursor.HAND);
+
+        btn.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #ffd700, #f0c000); " +
+            "-fx-background-radius: 12; " +
+            "-fx-border-color: rgba(255,255,255,0.3); " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.3), 8, 0, 0, 3);");
+
+        btn.setOpacity(0);
+        btn.setTranslateY(15);
+
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(150), btn);
+        scaleUp.setToX(1.06);
+        scaleUp.setToY(1.06);
+
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(150), btn);
+        scaleDown.setToX(1.0);
+        scaleDown.setToY(1.0);
+
+        btn.setOnMouseEntered(e -> {
+            scaleDown.stop();
+            btn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #ffe44d, #ffd700); " +
+                "-fx-background-radius: 12; " +
+                "-fx-border-color: rgba(255,255,255,0.5); " +
+                "-fx-border-radius: 12; " +
+                "-fx-border-width: 1.5; " +
+                "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.5), 12, 0, 0, 4);");
+            scaleUp.playFromStart();
+        });
+
+        btn.setOnMouseExited(e -> {
+            scaleUp.stop();
+            btn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #ffd700, #f0c000); " +
+                "-fx-background-radius: 12; " +
+                "-fx-border-color: rgba(255,255,255,0.3); " +
+                "-fx-border-radius: 12; " +
                 "-fx-border-width: 1; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0, 0, 3);",
-                colorNormal, colorHover));
+                "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.3), 8, 0, 0, 3);");
             scaleDown.playFromStart();
         });
 
@@ -212,7 +335,7 @@ public class DifficultySelectOverlay extends StackPane {
         return btn;
     }
 
-    /** 创建返回按钮 */
+    /** 返回按钮 */
     private Button createBackButton(String text, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
         Button btn = new Button(text);
         btn.setPrefSize(120, 42);
@@ -267,7 +390,6 @@ public class DifficultySelectOverlay extends StackPane {
         return btn;
     }
 
-    /** 颜色变亮辅助方法 */
     private String lightenColor(String hex) {
         try {
             Color c = Color.web(hex);
@@ -281,22 +403,29 @@ public class DifficultySelectOverlay extends StackPane {
         }
     }
 
-    private void startGame() {
-        setVisible(false);
-        setManaged(false);
-        gamePanel.startGame(1);
-    }
-
     private void returnToMenu() {
-        gamePanel.returnToMenuFromOverlay();
         setVisible(false);
         setManaged(false);
+        gamePanel.returnToMenuFromOverlay();
     }
 
     /** 显示面板并播放入场动画 */
     public void show() {
         setVisible(true);
         setManaged(true);
+
+        // 同步当前已保存的难度为选中状态
+        GameSettings.Difficulty current = gamePanel.getSettings().getDifficulty();
+        for (int i = 0; i < difficulties.length; i++) {
+            if (difficulties[i] == current) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        // 隐藏保存按钮
+        saveBtn.setVisible(false);
+        saveBtn.setManaged(false);
 
         SequentialTransition anim = new SequentialTransition();
 
@@ -320,5 +449,17 @@ public class DifficultySelectOverlay extends StackPane {
             anim.getChildren().add(pt);
         }
         anim.play();
+
+        // 动画结束后，将当前已保存的难度高亮
+        anim.setOnFinished(e -> {
+            Button[] allBtns = {easyBtn, normalBtn, hardBtn, nightmareBtn};
+            for (int i = 0; i < allBtns.length; i++) {
+                if (i == selectedIndex) {
+                    applySelectedStyle(allBtns[i], i);
+                } else {
+                    applyNormalStyle(allBtns[i], i);
+                }
+            }
+        });
     }
 }

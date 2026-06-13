@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 public class SlowTower extends Tower {
 
     public SlowTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "slow");
         this.name = "减速塔";
         this.buyCost = 150;
         this.upgradeCosts = new int[]{60, 90};

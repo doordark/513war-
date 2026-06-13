@@ -16,7 +16,6 @@ public class PurchasedItems {
 
     public PurchasedItems() {
         this.purchasedIndices = new HashSet<>();
-        this.purchasedIndices.add(0); // 默认解锁箭塔
         load();
     }
 
@@ -25,7 +24,6 @@ public class PurchasedItems {
      */
     public void load() {
         purchasedIndices.clear();
-        purchasedIndices.add(0); // 默认解锁箭塔
 
         File file = new File(FILE_NAME);
         if (!file.exists()) {

@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 public class NukeTower extends Tower {
 
     public NukeTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "nuke");
         this.name = "核弹塔";
         this.buyCost = 500;
         this.upgradeCosts = new int[]{400, 600};

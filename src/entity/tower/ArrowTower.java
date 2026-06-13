@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 public class ArrowTower extends Tower {
 
     public ArrowTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "arrow");
         this.name = "箭塔";
         this.buyCost = 50;
         this.upgradeCosts = new int[]{40, 60};

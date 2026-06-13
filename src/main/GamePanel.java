@@ -11,6 +11,9 @@ import entity.tower.LightningTower;
 import entity.tower.NukeTower;
 import entity.monster.Monster;
 import entity.Projectile;
+import entity.LightningEffect;
+import entity.ExplosionEffect;
+import entity.FloatingText;
 import wave.WaveManager;
 import enums.GameState;
 import enums.TowerType;
@@ -53,6 +56,11 @@ public class GamePanel {
     private final List<Projectile> projectileList;
     private WaveManager waveManager;
 
+    // ==================== 视觉效果 ====================
+    private final List<LightningEffect> lightningEffects;
+    private final List<ExplosionEffect> explosionEffects;
+    private final List<FloatingText> floatingTexts;
+
     // ==================== 游戏状态 ====================
     private GameState gameState;
 
@@ -89,6 +97,9 @@ public class GamePanel {
 
     // ==================== 设置 ====================
     private GameSettings settings;
+
+    // ==================== 无尽模式 ====================
+    private boolean isEndlessMode = false;
 
     // ==================== 放置模式 ====================
     private boolean placementMode = false;
@@ -132,8 +143,11 @@ public class GamePanel {
         this.towerList = new ArrayList<>();
         this.monsterList = new ArrayList<>();
         this.projectileList = new ArrayList<>();
+        this.lightningEffects = new ArrayList<>();
+        this.explosionEffects = new ArrayList<>();
+        this.floatingTexts = new ArrayList<>();
         this.gameState = GameState.MENU;
-        this.playerGold = 500;
+        this.playerGold = 150;
         this.playerLives = 20;
         this.score = 0;
         this.playerXP = 0;
@@ -171,6 +185,7 @@ public class GamePanel {
         this.scoreManager = new ScoreManager();
         this.leaderboardOverlay = new LeaderboardOverlay(scoreManager, () -> {
             gameState = GameState.MENU;
+            mainMenu.refreshUI();
             mainMenu.show();
         });
 
@@ -195,6 +210,13 @@ public class GamePanel {
     public LeaderboardOverlay getLeaderboardOverlay() { return leaderboardOverlay; }
     public ScoreManager getScoreManager() { return scoreManager; }
 
+    // 主菜单顶部数据同步用
+    public int getHp() { return playerLives; }
+    public int getGold() { return playerGold; }
+    public int getXp() { return playerXP; }
+    public int getXpMax() { return xpToNextLevel; }
+    public int getLevel() { return playerLevel; }
+
     /** 获取已购买的塔索引列表 */
     public java.util.List<Integer> getPurchasedTowerIndices() {
         return purchasedItems.getAll();
@@ -208,6 +230,7 @@ public class GamePanel {
     public List<Tower> getTowerList() { return towerList; }
     public boolean isWaveActive() { return waveManager != null && waveManager.isWaveActive(); }
     public boolean isAllWavesComplete() { return waveManager != null && waveManager.isAllComplete(); }
+    public boolean isEndlessMode() { return isEndlessMode; }
     public void startNextWave() { if (waveManager != null) waveManager.requestNextWave(); }
     public PauseOverlay getPauseOverlay() { return pauseOverlay; }
     public GameSettings getSettings() { return settings; }
@@ -219,17 +242,21 @@ public class GamePanel {
 
     public void startGame(int level) {
         gameMap = new GameMap();
-        gameMap.loadMap(level);
+        gameMap.loadMap(settings.getDifficulty());
 
         towerList.clear();
         monsterList.clear();
         projectileList.clear();
 
+        isEndlessMode = false;
         waveManager = new WaveManager(level, settings.getDifficulty());
 
-        playerGold = 500;
-        playerLives = 20;
-        score = 0;
+        // 从全局数据同步到游戏面板
+        playerGold = GameData.gold;
+        playerLives = GameData.hp;
+        score = GameData.score;
+        playerXP = GameData.exp;
+        playerLevel = GameData.level;
         selectedTowerType = null;
         selectedTower = null;
         showRange = false;
@@ -240,9 +267,148 @@ public class GamePanel {
         hudPanel.setVisible(true);
         hudPanel.setManaged(true);
 
+        // 启用商城按钮
+        mainMenu.enableShopButton();
+
         System.out.println("[游戏开始] 关卡=" + level + " 金币=" + playerGold + " 生命=" + playerLives);
 
         // 更新 HUD
+        hudPanel.updateState();
+    }
+
+    /**
+     * 继续游戏：从存档恢复，不重置任何数据。
+     */
+    public void continueGame() {
+        GameSave.SaveData savedData = GameSave.load();
+        if (savedData == null) {
+            System.out.println("[继续游戏] 未找到存档，无法继续");
+            return;
+        }
+
+        gameMap = new GameMap();
+        gameMap.loadMap(settings.getDifficulty());
+
+        towerList.clear();
+        monsterList.clear();
+        projectileList.clear();
+
+        // 从存档恢复数据
+        playerGold = savedData.playerGold;
+        playerLives = savedData.playerLives;
+        score = savedData.score;
+        playerXP = 0;
+        playerLevel = 1;
+
+        // 同步到 GameData
+        GameData.gold = playerGold;
+        GameData.hp = playerLives;
+        GameData.score = score;
+
+        isEndlessMode = false;
+        waveManager = new WaveManager(1, settings.getDifficulty());
+
+        // 恢复塔
+        for (GameSave.TowerSave ts : savedData.towers) {
+            Tower t = createTowerFromSave(ts);
+            if (t != null) {
+                towerList.add(t);
+            }
+        }
+
+        // 恢复怪物
+        for (GameSave.MonsterSave ms : savedData.monsters) {
+            Monster m = createMonsterFromSave(ms);
+            if (m != null) {
+                monsterList.add(m);
+            }
+        }
+
+        selectedTowerType = null;
+        selectedTower = null;
+        showRange = false;
+
+        gameState = GameState.PLAYING;
+
+        hudPanel.setVisible(true);
+        hudPanel.setManaged(true);
+        mainMenu.enableShopButton();
+
+        System.out.println("[继续游戏] 已恢复存档 - 金币=" + playerGold + " 生命=" + playerLives + " 波次=" + savedData.currentWave);
+        hudPanel.updateState();
+    }
+
+    /**
+     * 从存档数据创建防御塔。
+     */
+    private Tower createTowerFromSave(GameSave.TowerSave ts) {
+        try {
+            // 使用现有的 createTower 工厂方法
+            TowerType type = TowerType.valueOf(ts.type.toUpperCase());
+            Tower t = createTower(type, ts.row, ts.col);
+            if (t == null) return null;
+            // 恢复等级和属性
+            for (int i = 1; i < ts.level; i++) {
+                t.upgrade();
+            }
+            return t;
+        } catch (Exception e) {
+            System.err.println("[继续游戏] 恢复塔失败: " + ts.type + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 从存档数据创建怪物。
+     */
+    private Monster createMonsterFromSave(GameSave.MonsterSave ms) {
+        try {
+            Monster m;
+            switch (ms.type.toUpperCase()) {
+                case "NORMAL": m = new entity.monster.NormalMonster(ms.x, ms.y); break;
+                case "FAST":   m = new entity.monster.FastMonster(ms.x, ms.y); break;
+                case "TANK":   m = new entity.monster.TankMonster(ms.x, ms.y); break;
+                case "BOSS":   m = new entity.monster.BossMonster(ms.x, ms.y); break;
+                default:       m = new entity.monster.NormalMonster(ms.x, ms.y); break;
+            }
+            m.setCurrentHp(ms.currentHp);
+            m.setMaxHp(ms.maxHp);
+            return m;
+        } catch (Exception e) {
+            System.err.println("[继续游戏] 恢复怪物失败: " + ms.type + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** 启动无尽模式。 */
+    public void startEndlessGame() {
+        gameMap = new GameMap();
+        gameMap.loadMap(settings.getDifficulty());
+
+        towerList.clear();
+        monsterList.clear();
+        projectileList.clear();
+
+        isEndlessMode = true;
+        waveManager = new WaveManager(1, settings.getDifficulty(), true);
+
+        // 从全局数据同步到游戏面板
+        playerGold = GameData.gold;
+        playerLives = GameData.hp;
+        score = GameData.score;
+        playerXP = GameData.exp;
+        playerLevel = GameData.level;
+        selectedTowerType = null;
+        selectedTower = null;
+        showRange = false;
+
+        gameState = GameState.PLAYING;
+
+        hudPanel.setVisible(true);
+        hudPanel.setManaged(true);
+        mainMenu.enableShopButton();
+
+        System.out.println("[无尽模式开始] 金币=" + playerGold + " 生命=" + playerLives);
         hudPanel.updateState();
     }
 
@@ -292,17 +458,24 @@ public class GamePanel {
                     settingsOverlay.setVisible(false);
                     settingsOverlay.setManaged(false);
                     gameState = GameState.MENU;
+                    mainMenu.refreshUI();
                     mainMenu.show();
                 } else if (gameState == GameState.DIFFICULTY_SELECT) {
                     difficultyOverlay.setVisible(false);
                     difficultyOverlay.setManaged(false);
                     gameState = GameState.MENU;
+                    mainMenu.refreshUI();
                     mainMenu.show();
                 } else if (gameState == GameState.SHOP) {
                     shopOverlay.setVisible(false);
                     shopOverlay.setManaged(false);
-                    gameState = GameState.PAUSED;
-                    pauseOverlay.show();
+                    // 根据商城打开来源决定返回状态
+                    if (shopOverlay.getOpenSource() == 2) {
+                        gameState = GameState.PLAYING;
+                    } else {
+                        gameState = GameState.PAUSED;
+                        pauseOverlay.show();
+                    }
                 }
                 break;
             case P:
@@ -346,6 +519,7 @@ public class GamePanel {
         updateTowers();
         updateProjectiles();
         checkCollisions();
+        updateEffects();
         checkGameOver();
         checkVictory();
     }
@@ -368,6 +542,7 @@ public class GamePanel {
                     + " 坐标=(" + String.format("%.1f", m.getX()) + ", " + String.format("%.1f", m.getY()) + ")"
                     + " 扣血=" + m.getDamageToPlayer());
                 playerLives -= m.getDamageToPlayer();
+                GameData.hp = playerLives;
                 toRemove.add(m);
                 continue;
             }
@@ -377,7 +552,18 @@ public class GamePanel {
                     + " 击杀塔=" + (m.getLastHitByTowerType() != null ? m.getLastHitByTowerType() : "未知")
                     + " 奖励金币=" + m.getRewardGold());
                 playerGold += m.getRewardGold();
-                score += m.getRewardGold();
+                GameData.gold = playerGold;
+
+                // 无尽模式高风险高回报积分：波数越高，杀一只怪给的分数越夸张
+                if (isEndlessMode) {
+                    int baseKillScore = 10;
+                    int endlessScore = baseKillScore * (1 + getCurrentWave());
+                    score += endlessScore;
+                    System.out.println("[无尽积分] 波次" + getCurrentWave() + " 击杀+" + endlessScore + " 总分=" + score);
+                } else {
+                    score += m.getRewardGold();
+                }
+                GameData.score = score;
                 addXP(m.getXpReward());
                 toRemove.add(m);
             }
@@ -403,13 +589,63 @@ public class GamePanel {
         for (Projectile p : projectileList) {
             if (p.hasHit()) {
                 // 结算伤害
-                p.onHit(monsterList);
+                boolean needExplosion = p.onHit(monsterList);
+                if (needExplosion) {
+                    explosionEffects.add(new ExplosionEffect(p.getX(), p.getY(), Color.ORANGE));
+                }
+
+                // 伤害飘字
+                if (p.getTarget() != null && p.getTarget().isAlive()) {
+                    Monster target = p.getTarget();
+                    String towerType = p.getTowerType();
+                    Color textColor = Color.RED;
+
+                    // 根据塔类型设置飘字颜色
+                    if (towerType != null) {
+                        switch (towerType) {
+                            case "ARROW":     textColor = Color.YELLOW; break;
+                            case "CANNON":    textColor = Color.ORANGE; break;
+                            case "SLOW":      textColor = Color.CYAN; break;
+                            case "LIGHTNING": textColor = Color.web("#9664ff"); break;
+                            case "NUKE":      textColor = Color.RED; break;
+                            default:          textColor = Color.RED; break;
+                        }
+                    }
+
+                    // 减速塔显示特殊文字
+                    if (towerType != null && towerType.equals("SLOW")) {
+                        floatingTexts.add(new FloatingText(target.getX(), target.getY() - 20, "减速!", Color.CYAN));
+                    }
+
+                    floatingTexts.add(new FloatingText(target.getX(), target.getY() - 10, "-" + p.getDamage(), textColor));
+                }
+
                 toRemove.add(p);
             } else if (isOutOfBounds(p)) {
                 toRemove.add(p);
             }
         }
         projectileList.removeAll(toRemove);
+    }
+
+    /**
+     * 更新所有视觉特效（闪电、爆炸、飘字）。
+     */
+    private void updateEffects() {
+        // 更新爆炸效果
+        for (ExplosionEffect e : explosionEffects) {
+            e.update();
+        }
+        explosionEffects.removeIf(ExplosionEffect::isExpired);
+
+        // 更新飘字
+        for (FloatingText t : floatingTexts) {
+            t.update();
+        }
+        floatingTexts.removeIf(FloatingText::isExpired);
+
+        // 闪电效果不需要每帧更新，只需移除过期的
+        lightningEffects.removeIf(LightningEffect::isExpired);
     }
 
     private boolean isOutOfBounds(Projectile p) {
@@ -427,6 +663,8 @@ public class GamePanel {
     }
 
     private void checkVictory() {
+        // 无尽模式永不胜利，只有死亡
+        if (isEndlessMode) return;
         if (waveManager != null && waveManager.isAllComplete() && monsterList.isEmpty() && gameState == GameState.PLAYING) {
             gameState = GameState.VICTORY;
             gameEngine.stop();
@@ -437,22 +675,91 @@ public class GamePanel {
 
     /**
      * 游戏结束处理：弹出名字输入框，保存分数。
+     * 无尽模式下，记录坚持的最高波数。
+     * 普通模式不计入排行榜。
      */
     private void handleGameEnd(boolean victory) {
-        // 计算最终得分（分数 + 剩余生命 * 100 + 波次 * 50）
-        int finalScore = score + playerLives * 100 + (waveManager != null ? waveManager.getCurrentWave() * 50 : 0);
+        int finalScore;
+        int wave = waveManager != null ? waveManager.getCurrentWave() : 0;
+        String difficulty = settings.getDifficulty().getDisplayName();
+
+        if (isEndlessMode) {
+            // 无尽模式：记录坚持的最高波数
+            finalScore = wave;
+        } else {
+            finalScore = score + playerLives * 100 + wave * 50;
+        }
 
         // 弹出名字输入框
         NameInputDialog dialog = new NameInputDialog();
-        String title = victory ? "🎉 胜利！" : "💀 游戏结束";
-        String message = victory ? "恭喜通关！请输入你的名字保存成绩。" : "挑战失败！请输入你的名字保存成绩。";
+        String title = isEndlessMode ? "无尽模式结束"
+                       : (victory ? "胜利！" : "游戏结束");
+        String message = isEndlessMode ? "你坚持了 " + wave + " 波！请输入你的名字保存成绩。"
+                       : (victory ? "恭喜通关！请输入你的名字保存成绩。" : "挑战失败！请输入你的名字保存成绩。");
         String playerName = dialog.show(title, message, finalScore);
 
+        // 排行榜准入条件：仅无尽模式可写入
         if (playerName != null) {
-            String difficulty = settings.getDifficulty().getDisplayName();
-            int wave = waveManager != null ? waveManager.getCurrentWave() : 0;
-            scoreManager.tryAddScore(playerName, finalScore, wave, difficulty);
+            if (isEndlessMode) {
+                scoreManager.tryAddScore(playerName, finalScore, wave, difficulty, true);
+                System.out.println("[排行榜] 无尽模式成绩已保存: " + playerName + " - " + finalScore + "分");
+            } else {
+                System.out.println("[排行榜] 普通模式不计入排行榜，快去挑战无尽模式吧！");
+                // 普通模式不保存分数到排行榜
+            }
         }
+    }
+
+    /**
+     * 无尽模式主动结算流程：停止游戏 → 时间命名 → 写入排行榜 → 返回主菜单。
+     */
+    public void triggerEndlessSettlement() {
+        System.out.println("[无尽结算] 开始结算流程...");
+
+        // 1. 停止游戏引擎
+        if (gameEngine != null) {
+            gameEngine.stop();
+        }
+        gameState = GameState.MENU;
+
+        // 2. 获取当前时间作为默认名字
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        String defaultName = java.time.LocalDateTime.now().format(dtf);
+
+        // 3. 将当前积分与时间名字写入无尽排行榜
+        int wave = waveManager != null ? waveManager.getCurrentWave() : 0;
+        String difficulty = settings.getDifficulty().getDisplayName();
+        scoreManager.tryAddScore(defaultName, score, wave, difficulty, true);
+        System.out.println("[排行榜] 无尽模式成绩已保存: " + defaultName + " - " + score + "分");
+
+        // 4. 弹出结算成功提示
+        javafx.scene.control.Alert infoAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        infoAlert.setTitle("结算成功");
+        infoAlert.setHeaderText("你的成绩已载入 513 荣誉墙！");
+        infoAlert.setContentText("得分: " + score + "\n记录名: " + defaultName);
+        infoAlert.showAndWait();
+
+        // 5. 返回主菜单
+        GameData.hp = playerLives;
+        GameData.gold = playerGold;
+        GameData.exp = playerXP;
+        GameData.level = playerLevel;
+        GameData.score = score;
+        GameData.isEndless = false;
+
+        isEndlessMode = false;
+        selectedTower = null;
+        selectedTowerType = null;
+        showRange = false;
+
+        hudPanel.setVisible(false);
+        hudPanel.setManaged(false);
+        mainMenu.disableShopButton();
+        mainMenu.refreshUI();
+        mainMenu.show();
+        mainMenu.toFront();
+
+        System.out.println("[无尽结算] 完成，已返回主菜单");
     }
 
     /**
@@ -460,11 +767,14 @@ public class GamePanel {
      */
     public void addXP(int amount) {
         playerXP += amount;
+        GameData.exp = playerXP;
         System.out.println("[获得经验] +" + amount + " 总经验=" + playerXP + " 等级=" + playerLevel);
 
         while (playerXP >= xpToNextLevel) {
             playerXP -= xpToNextLevel;
+            GameData.exp = playerXP;
             playerLevel++;
+            GameData.level = playerLevel;
             xpToNextLevel = (int) (xpToNextLevel * 1.5);
             System.out.println("[升级] 恭喜！当前等级 LV." + playerLevel + " 下一级需要 " + xpToNextLevel + " 经验");
         }
@@ -500,20 +810,42 @@ public class GamePanel {
     }
 
     public void returnToMenu() {
+        // 将游戏面板数据同步回全局 GameData
+        GameData.hp = playerLives;
+        GameData.gold = playerGold;
+        GameData.exp = playerXP;
+        GameData.level = playerLevel;
+        GameData.score = score;
+        // 保留无尽模式状态，不要强制设为 false
+        GameData.isEndless = isEndlessMode;
+
         gameState = GameState.MENU;
         selectedTower = null;
         selectedTowerType = null;
         showRange = false;
         hudPanel.updateState();
+        mainMenu.disableShopButton();
+        mainMenu.refreshUI();
         mainMenu.show();
+        mainMenu.toFront(); // 强制将主菜单提升到 StackPane 最顶层
         GameSave.save(this);
         System.out.println("[返回] 已返回主菜单，游戏进度已保存");
     }
 
     /** 从难度选择/设置面板返回主菜单（不保存游戏进度） */
     public void returnToMenuFromOverlay() {
+        // 同步数据
+        GameData.hp = playerLives;
+        GameData.gold = playerGold;
+        GameData.exp = playerXP;
+        GameData.level = playerLevel;
+        GameData.score = score;
+
         gameState = GameState.MENU;
+        mainMenu.disableShopButton();
+        mainMenu.refreshUI();
         mainMenu.show();
+        mainMenu.toFront(); // 强制将主菜单提升到 StackPane 最顶层
         System.out.println("[返回] 已返回主菜单");
     }
 
@@ -540,6 +872,12 @@ public class GamePanel {
     public void showShopFromMenu() {
         gameState = GameState.SHOP;
         shopOverlay.show(false);
+    }
+
+    /** 从游戏中直接进入商城（不暂停游戏） */
+    public void showShopFromPlaying() {
+        gameState = GameState.SHOP;
+        shopOverlay.showFromGame();
     }
 
     public void showLeaderboard() {
@@ -570,6 +908,7 @@ public class GamePanel {
 
         // 扣款
         playerGold -= weapon.getPrice();
+        GameData.gold = playerGold;
 
         // 添加到已购买列表
         int hudIndex = weapon.getHudIndex();
@@ -579,13 +918,16 @@ public class GamePanel {
         // 更新 HUD 按钮
         hudPanel.updateTowerButtons();
 
-        // 进入放置模式
+        // 进入放置模式，恢复游戏渲染和逻辑更新
+        gameState = GameState.PLAYING;
         placementMode = true;
         pendingWeapon = weapon;
         pendingWeaponIndex = index;
         shopOverlay.setVisible(false);
         shopOverlay.setManaged(false);
-        shopOverlay.showToast("点击地图空白区域放置 " + weapon.getName(), false);
+
+        // 显示提示（用 toastOverlay 或直接在 HUD 上显示）
+        hudPanel.showToast("点击地图空白区域放置 " + weapon.getName(), false);
 
         System.out.println("[商城] 进入放置模式: " + weapon.getName() + " 剩余金币=" + playerGold);
         hudPanel.updateState();
@@ -598,6 +940,23 @@ public class GamePanel {
         return false;
     }
 
+    // ==================== 视觉效果 API ====================
+
+    /** 添加闪电效果 */
+    public void addLightningEffect(double startX, double startY, double endX, double endY, Color color) {
+        lightningEffects.add(new LightningEffect(startX, startY, endX, endY, color));
+    }
+
+    /** 添加爆炸效果 */
+    public void addExplosionEffect(double x, double y, Color color) {
+        explosionEffects.add(new ExplosionEffect(x, y, color));
+    }
+
+    /** 添加伤害飘字 */
+    public void addFloatingText(double x, double y, String text, Color color) {
+        floatingTexts.add(new FloatingText(x, y, text, color));
+    }
+
     public void loadGame() {
         GameSave.SaveData data = GameSave.load();
         if (data == null) return;
@@ -606,6 +965,11 @@ public class GamePanel {
         playerGold = data.playerGold;
         playerLives = data.playerLives;
         score = data.score;
+
+        // 同步到 GameData
+        GameData.gold = playerGold;
+        GameData.hp = playerLives;
+        GameData.score = score;
 
         // 恢复塔
         for (GameSave.TowerSave ts : data.towers) {
@@ -675,17 +1039,27 @@ public class GamePanel {
             t.render(gc);
         }
 
-        // 5. 选中塔的范围圈
+        // 5. 闪电效果
+        for (LightningEffect e : lightningEffects) {
+            e.render(gc);
+        }
+
+        // 6. 爆炸效果
+        for (ExplosionEffect e : explosionEffects) {
+            e.render(gc);
+        }
+
+        // 7. 选中塔的范围圈
         if (showRange && selectedTower != null) {
             selectedTower.renderRangeCircle(gc);
         }
 
-        // 6. 放置预览
+        // 8. 放置预览
         renderPlacementPreview();
 
-        // 7. 暂停遮罩
-        if (gameState == GameState.PAUSED) {
-            renderPauseOverlay();
+        // 9. 伤害飘字
+        for (FloatingText t : floatingTexts) {
+            t.render(gc);
         }
     }
 
@@ -764,17 +1138,6 @@ public class GamePanel {
         }
     }
 
-    private void renderPauseOverlay() {
-        gc.setFill(Color.color(0, 0, 0, 0.6));
-        gc.fillRect(0, 0, WIDTH, HEIGHT);
-
-        gc.setFill(Color.WHITE);
-        gc.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 36));
-        String msg = "已暂停";
-        double w = gc.getFont().getSize() * msg.length() * 0.55;
-        gc.fillText(msg, (WIDTH - w) / 2, HEIGHT / 2);
-    }
-
     private void renderGameOverOverlay() {
         gc.setFill(Color.color(0, 0, 0, 0.85));
         gc.fillRect(0, 0, WIDTH, HEIGHT);
@@ -815,7 +1178,15 @@ public class GamePanel {
         // DIFFICULTY_SELECT 和 SETTINGS 由 JavaFX 组件处理点击，无需 Canvas 点击检测
 
         if (gameState == GameState.GAME_OVER || gameState == GameState.VICTORY) {
+            // 同步数据到 GameData
+            GameData.hp = playerLives;
+            GameData.gold = playerGold;
+            GameData.exp = playerXP;
+            GameData.level = playerLevel;
+            GameData.score = score;
+
             gameState = GameState.MENU;
+            mainMenu.refreshUI();
             mainMenu.show();
             // 隐藏 HUD
             hudPanel.setVisible(false);
@@ -914,6 +1285,7 @@ public class GamePanel {
         Tower tower = createTower(type, row, col);
         if (tower != null) {
             playerGold -= cost;
+            GameData.gold = playerGold;
             tile.setOccupiedTower(tower);
             towerList.add(tower);
             System.out.println("[建造成功] 类型=" + type + " 位置=(" + row + "," + col + ")"
@@ -943,7 +1315,7 @@ public class GamePanel {
         pendingWeapon = null;
         pendingWeaponIndex = -1;
         hudPanel.updateState();
-        shopOverlay.showToast("防御塔放置成功！", false);
+        hudPanel.showToast("防御塔放置成功！", false);
     }
 
     /** 取消放置模式 */
@@ -951,18 +1323,20 @@ public class GamePanel {
         if (placementMode && pendingWeapon != null) {
             // 退还金币
             playerGold += pendingWeapon.getPrice();
+            GameData.gold = playerGold;
             System.out.println("[商城] 取消放置，退还金币: " + pendingWeapon.getPrice());
             placementMode = false;
             pendingWeapon = null;
             pendingWeaponIndex = -1;
             hudPanel.updateState();
-            shopOverlay.showToast("已取消购买，金币已退还", false);
+            hudPanel.showToast("已取消购买，金币已退还", false);
         }
     }
 
     public void sellTower(Tower tower) {
         int sellValue = tower.getSellValue();
         playerGold += sellValue;
+        GameData.gold = playerGold;
         Tile tile = gameMap.getTile(tower.getRow(), tower.getCol());
         if (tile != null) {
             tile.setOccupiedTower(null);
@@ -987,6 +1361,7 @@ public class GamePanel {
         }
 
         playerGold -= upgradeCost;
+        GameData.gold = playerGold;
         int oldLevel = tower.getLevel();
         tower.upgrade();
         System.out.println("[升级成功] " + tower.getType() + " Lv." + oldLevel + " -> Lv." + tower.getLevel()
@@ -1016,15 +1391,22 @@ public class GamePanel {
         int pixelX = col * tileSize + tileSize / 2;
         int pixelY = row * tileSize + tileSize / 2;
 
+        Tower tower = null;
         switch (type) {
-            case ARROW:     return new ArrowTower(row, col, pixelX, pixelY);
-            case CANNON:    return new CannonTower(row, col, pixelX, pixelY);
-            case MAGIC:     return new MagicTower(row, col, pixelX, pixelY);
-            case SLOW:      return new SlowTower(row, col, pixelX, pixelY);
-            case LIGHTNING: return new LightningTower(row, col, pixelX, pixelY);
-            case NUKE:      return new NukeTower(row, col, pixelX, pixelY);
+            case ARROW:     tower = new ArrowTower(row, col, pixelX, pixelY); break;
+            case CANNON:    tower = new CannonTower(row, col, pixelX, pixelY); break;
+            case MAGIC:     tower = new MagicTower(row, col, pixelX, pixelY); break;
+            case SLOW:      tower = new SlowTower(row, col, pixelX, pixelY); break;
+            case LIGHTNING: tower = new LightningTower(row, col, pixelX, pixelY); break;
+            case NUKE:      tower = new NukeTower(row, col, pixelX, pixelY); break;
             default:        return null;
         }
+
+        // 设置 GamePanel 引用，用于触发视觉效果
+        if (tower != null) {
+            tower.setGamePanel(this);
+        }
+        return tower;
     }
 
     private int getTowerCost(TowerType type) {

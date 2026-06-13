@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 public class TankMonster extends Monster {
 
     public TankMonster(double x, double y) {
-        super(x, y, 150, 0.8, 5, 20, 30, 2, Color.DARKGRAY);
+        super(x, y, 150, 0.8, 5, 20, 30, 2, Color.DARKGRAY, "tank");
         this.name = "坦克怪";
     }
 

@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 public class CannonTower extends Tower {
 
     public CannonTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "cannon");
         this.name = "炮塔";
         this.buyCost = 100;
         this.upgradeCosts = new int[]{80, 120};

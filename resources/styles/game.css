@@ -1,5 +1,6 @@
 /* ============================================================
-   Modern Flat & Sci-Fi Style — 塔防游戏全局样式表
+   513保卫战 - 现代科幻风格 UI 设计系统
+   设计理念：深空主题 + 霓虹光效 + 磨砂玻璃 + 微交互
    ============================================================ */
 
 /* ===== 全局根节点 ===== */
@@ -140,33 +141,36 @@
 }
 
 /* ============================================================
-   HUD 面板 — 磨砂玻璃风格
+   HUD 面板 — 高级磨砂玻璃风格
    ============================================================ */
 
 .hud-panel {
-  -fx-background-color: linear-gradient(to bottom, #0f172aee, #0a0f1efa);
-  -fx-border-color: #64b5f622;
+  -fx-background-color: #1a1e26;
+  -fx-border-color: rgba(255, 255, 255, 0.1) transparent transparent transparent;
   -fx-border-width: 1 0 0 0;
-  -fx-padding: 8 20;
+  -fx-padding: 10 20;
   -fx-spacing: 0;
   -fx-alignment: center;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0, 0, -2);
 }
 
-/* 状态卡片 — 磨砂玻璃 */
+/* 状态卡片 — 高级磨砂玻璃 */
 .stat-card {
-  -fx-background-color: rgba(255, 255, 255, 0.04);
-  -fx-background-radius: 8;
-  -fx-border-color: rgba(255, 255, 255, 0.06);
-  -fx-border-radius: 8;
+  -fx-background-color: rgba(255, 255, 255, 0.03);
+  -fx-background-radius: 10;
+  -fx-border-color: rgba(255, 255, 255, 0.05);
+  -fx-border-radius: 10;
   -fx-border-width: 1;
-  -fx-padding: 6 14;
+  -fx-padding: 6 12;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 4, 0, 0, 1);
 }
 
 /* 状态标签 */
 .stat-label {
   -fx-font-family: "Microsoft YaHei", "PingFang SC";
-  -fx-font-size: 16px;
+  -fx-font-size: 14px;
   -fx-font-weight: bold;
+  -fx-padding: 0 4;
   -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 3, 0, 0, 1);
 }
 
@@ -200,52 +204,66 @@
 
 /* 分隔线 */
 .hud-separator {
-  -fx-background-color: #ffffff11;
+  -fx-background-color: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(100, 181, 246, 0.15),
+    transparent
+  );
+  -fx-pref-width: 1;
 }
 
 /* ============================================================
-   防御塔购买按钮
+   防御塔购买按钮 — 高级卡片设计
    ============================================================ */
 
 .tower-button {
   -fx-background-color: linear-gradient(
     to bottom,
-    rgba(30, 41, 59, 0.85),
-    rgba(15, 23, 42, 0.85)
+    rgba(30, 41, 59, 0.9),
+    rgba(15, 23, 42, 0.9)
   );
-  -fx-background-radius: 10;
-  -fx-border-color: rgba(255, 255, 255, 0.1);
-  -fx-border-radius: 10;
+  -fx-background-radius: 12;
+  -fx-border-color: rgba(255, 255, 255, 0.08);
+  -fx-border-radius: 12;
   -fx-border-width: 1;
   -fx-cursor: hand;
-  -fx-effect: dropshadow(gaussian, #00000033, 4, 0, 0, 2);
+  -fx-effect: dropshadow(gaussian, #00000044, 6, 0, 0, 3);
   -fx-alignment: center;
+  -fx-padding: 4;
 }
 
 .tower-button:hover {
   -fx-background-color: linear-gradient(
     to bottom,
-    rgba(51, 65, 85, 0.9),
-    rgba(30, 41, 59, 0.9)
+    rgba(51, 65, 85, 0.95),
+    rgba(30, 41, 59, 0.95)
   );
   -fx-border-color: rgba(100, 181, 246, 0.5);
   -fx-border-width: 1.5;
-  -fx-effect: dropshadow(gaussian, rgba(100, 181, 246, 0.3), 10, 0, 0, 0);
+  -fx-effect: dropshadow(gaussian, rgba(100, 181, 246, 0.3), 12, 0, 0, 0);
 }
 
 .tower-button:pressed {
   -fx-background-color: linear-gradient(
     to bottom,
-    rgba(15, 23, 42, 0.95),
-    rgba(30, 41, 59, 0.95)
+    rgba(15, 23, 42, 0.98),
+    rgba(30, 41, 59, 0.98)
   );
   -fx-border-color: rgba(66, 165, 245, 0.8);
+  -fx-effect: dropshadow(gaussian, rgba(66, 165, 245, 0.4), 8, 0, 0, 0);
 }
 
 .tower-button.selected {
   -fx-border-color: #ffd54f;
   -fx-border-width: 2;
-  -fx-effect: dropshadow(gaussian, rgba(255, 213, 79, 0.4), 12, 0, 0, 0);
+  -fx-effect: dropshadow(gaussian, rgba(255, 213, 79, 0.5), 14, 0, 0, 0);
+}
+
+.tower-button:disabled {
+  -fx-opacity: 0.4;
+  -fx-cursor: default;
+  -fx-effect: none;
 }
 
 /* 快捷键标签 */
@@ -300,17 +318,17 @@
 /* 升级按钮 */
 .btn-upgrade {
   -fx-background-color: linear-gradient(to bottom, #43a047, #2e7d32);
-  -fx-background-radius: 6;
+  -fx-background-radius: 8;
   -fx-text-fill: white;
   -fx-font-family: "Microsoft YaHei", "PingFang SC";
   -fx-font-size: 12px;
   -fx-font-weight: bold;
   -fx-cursor: hand;
-  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+  -fx-effect: dropshadow(gaussian, #00000033, 4, 0, 0, 2);
 }
 .btn-upgrade:hover {
   -fx-background-color: linear-gradient(to bottom, #66bb6a, #43a047);
-  -fx-effect: dropshadow(gaussian, #43a04766, 8, 0, 0, 0);
+  -fx-effect: dropshadow(gaussian, #43a04766, 10, 0, 0, 0);
 }
 .btn-upgrade:disabled {
   -fx-background-color: #555555;
@@ -322,58 +340,84 @@
 /* 出售按钮 */
 .btn-sell {
   -fx-background-color: linear-gradient(to bottom, #e53935, #c62828);
-  -fx-background-radius: 6;
+  -fx-background-radius: 8;
   -fx-text-fill: white;
   -fx-font-family: "Microsoft YaHei", "PingFang SC";
   -fx-font-size: 12px;
   -fx-font-weight: bold;
   -fx-cursor: hand;
-  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+  -fx-effect: dropshadow(gaussian, #00000033, 4, 0, 0, 2);
 }
 .btn-sell:hover {
   -fx-background-color: linear-gradient(to bottom, #ef5350, #e53935);
-  -fx-effect: dropshadow(gaussian, #e5393566, 8, 0, 0, 0);
+  -fx-effect: dropshadow(gaussian, #e5393566, 10, 0, 0, 0);
 }
 
 /* 取消放置按钮 */
 .btn-cancel-placement {
   -fx-background-color: linear-gradient(to bottom, #ff9800, #f57c00);
-  -fx-background-radius: 8;
+  -fx-background-radius: 10;
   -fx-text-fill: white;
   -fx-font-family: "Microsoft YaHei", "PingFang SC";
   -fx-font-size: 13px;
   -fx-font-weight: bold;
   -fx-cursor: hand;
-  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+  -fx-effect: dropshadow(gaussian, #00000033, 4, 0, 0, 2);
 }
 .btn-cancel-placement:hover {
   -fx-background-color: linear-gradient(to bottom, #ffb74d, #ff9800);
-  -fx-effect: dropshadow(gaussian, #ff980066, 8, 0, 0, 0);
+  -fx-effect: dropshadow(gaussian, #ff980066, 10, 0, 0, 0);
 }
 
-/* 下一波按钮 */
+/* 下一波按钮 — 暗色扁平风格 */
 .btn-next-wave {
-  -fx-background-color: linear-gradient(to bottom, #78909c, #546e7a);
-  -fx-background-radius: 8;
-  -fx-text-fill: white;
+  -fx-background-color: #2a2f3d;
+  -fx-border-color: rgba(255, 255, 255, 0.2);
+  -fx-border-width: 1px;
+  -fx-border-radius: 4px;
+  -fx-background-radius: 4px;
+  -fx-text-fill: #ffffff;
   -fx-font-family: "Microsoft YaHei", "PingFang SC";
   -fx-font-size: 13px;
   -fx-font-weight: bold;
+  -fx-padding: 6px 15px;
   -fx-cursor: default;
-  -fx-effect: dropshadow(gaussian, #00000033, 3, 0, 0, 1);
+}
+.btn-next-wave:hover {
+  -fx-background-color: #3a4052;
+  -fx-border-color: #4facfe;
 }
 .btn-next-wave-ready {
-  -fx-background-color: linear-gradient(to bottom, #66bb6a, #43a047) !important;
+  -fx-background-color: #2a2f3d !important;
+  -fx-border-color: #4facfe !important;
   -fx-cursor: hand !important;
-  -fx-effect: dropshadow(gaussian, #43a04766, 6, 0, 0, 1) !important;
 }
 .btn-next-wave-ready:hover {
-  -fx-background-color: linear-gradient(to bottom, #81c784, #66bb6a) !important;
-  -fx-effect: dropshadow(gaussian, #43a047aa, 10, 0, 0, 0) !important;
+  -fx-background-color: #3a4052 !important;
+  -fx-border-color: #4facfe !important;
 }
 .btn-next-wave-disabled {
   -fx-opacity: 0.5;
   -fx-cursor: default;
+}
+
+/* 商城按钮 — 暗色扁平风格 */
+.btn-shop {
+  -fx-background-color: #2a2f3d;
+  -fx-border-color: rgba(255, 255, 255, 0.2);
+  -fx-border-width: 1px;
+  -fx-border-radius: 4px;
+  -fx-background-radius: 4px;
+  -fx-text-fill: #ffffff;
+  -fx-font-family: "Microsoft YaHei", "PingFang SC";
+  -fx-font-size: 13px;
+  -fx-font-weight: bold;
+  -fx-padding: 6px 15px;
+  -fx-cursor: hand;
+}
+.btn-shop:hover {
+  -fx-background-color: #3a4052;
+  -fx-border-color: #4facfe;
 }
 
 /* ============================================================

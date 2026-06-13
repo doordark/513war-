@@ -18,6 +18,7 @@ public class PauseOverlay extends VBox {
     private final GamePanel gamePanel;
 
     private Button continueBtn;
+    private Button shopBtn;
     private Button menuBtn;
     private Button settingsBtn;
 
@@ -29,9 +30,9 @@ public class PauseOverlay extends VBox {
         setPadding(new Insets(30));
         setPrefSize(960, 600);
 
-        // 半透明背景
+        // 半透明背景 — 深空渐变
         setStyle(
-            "-fx-background-color: rgba(0, 0, 0, 0.75);" +
+            "-fx-background-color: linear-gradient(to bottom, rgba(8, 8, 24, 0.88), rgba(15, 15, 35, 0.88));" +
             "-fx-background-radius: 0;"
         );
 
@@ -57,6 +58,12 @@ public class PauseOverlay extends VBox {
             setManaged(false);
         });
 
+        shopBtn = createButton("游戏商城", "#ecc94b", e -> {
+            setVisible(false);
+            setManaged(false);
+            gamePanel.showShopFromPause();
+        });
+
         menuBtn = createButton("返回主菜单", "#ed8936", e -> {
             gamePanel.saveGame();
             gamePanel.returnToMenu();
@@ -71,13 +78,40 @@ public class PauseOverlay extends VBox {
             gamePanel.showSettingsFromPause();
         });
 
-        btnContainer.getChildren().addAll(continueBtn, menuBtn, settingsBtn);
+        btnContainer.getChildren().addAll(continueBtn, shopBtn, menuBtn, settingsBtn);
 
         getChildren().addAll(titleLabel, waveInfo, btnContainer);
 
         // 初始隐藏
         setVisible(false);
         setManaged(false);
+    }
+
+    /** 显示暂停菜单（直接出现，无动画） */
+    public void show() {
+        setPrefSize(960, 600);
+        setMinSize(960, 600);
+        setMaxSize(960, 600);
+        setVisible(true);
+        setManaged(true);
+        setOpacity(1.0);
+        toFront();
+
+        // 所有子组件直接可见
+        getChildren().forEach(node -> {
+            node.setVisible(true);
+            node.setManaged(true);
+            node.setOpacity(1.0);
+        });
+
+        // 所有按钮直接显示
+        Button[] buttons = {continueBtn, shopBtn, menuBtn, settingsBtn};
+        for (Button btn : buttons) {
+            btn.setVisible(true);
+            btn.setManaged(true);
+            btn.setOpacity(1.0);
+            btn.setTranslateY(0);
+        }
     }
 
     private Button createButton(String text, String color, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
@@ -141,10 +175,5 @@ public class PauseOverlay extends VBox {
         g = Math.min(255, g + 40);
         b = Math.min(255, b + 40);
         return String.format("#%02x%02x%02x", r, g, b);
-    }
-
-    public void show() {
-        setVisible(true);
-        setManaged(true);
     }
 }

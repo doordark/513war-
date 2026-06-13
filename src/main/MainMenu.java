@@ -22,7 +22,7 @@ import javafx.util.Duration;
 public class MainMenu extends StackPane {
 
     private static final int WIDTH = 960;
-    private static final int HEIGHT = 680;
+    private static final int HEIGHT = 710; // 与场景高度一致，消除底部黑边
 
     private final GamePanel gamePanel;
 
@@ -42,6 +42,8 @@ public class MainMenu extends StackPane {
 
     // 按钮
     private Button startBtn;
+    private Button continueBtn;  // 继续游戏
+    private Button endlessBtn;
     private Button difficultyBtn;
     private Button shopBtn;
     private Button leaderboardBtn;
@@ -66,8 +68,10 @@ public class MainMenu extends StackPane {
         backgroundLayer.setMinSize(WIDTH, HEIGHT);
         backgroundLayer.setMaxSize(WIDTH, HEIGHT);
 
-        // 默认背景色（用户可替换为图片）
-        backgroundLayer.setStyle("-fx-background-color: #87CEEB;");
+        // 默认背景色（深空渐变）
+        backgroundLayer.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #0a0a1a, #1a1a3e, #0d1b2a);"
+        );
 
         // 背景图片接口 — 用户调用 setBackgroundImage(path) 替换
         backgroundImageView = new ImageView();
@@ -129,7 +133,9 @@ public class MainMenu extends StackPane {
         backgroundImageView.setImage(null);
         backgroundImageView.setVisible(false);
         backgroundImageView.setManaged(false);
-        backgroundLayer.setStyle("-fx-background-color: #87CEEB;");
+        backgroundLayer.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #0a0a1a, #1a1a3e, #0d1b2a);"
+        );
     }
 
     // ===== 顶部栏 =====
@@ -145,9 +151,9 @@ public class MainMenu extends StackPane {
         leftBox.setSpacing(8);
         leftBox.setAlignment(Pos.CENTER_LEFT);
 
-        hpLabel = createStatBox("♥ 20", "#ff4444", "rgba(255,68,68,0.25)");
-        xpLabel = createStatBox("★ 0/100", "#4fc3f7", "rgba(79,195,247,0.25)");
-        levelLabel = createStatBox("⭐ LV.1", "#FFD54F", "rgba(255,213,79,0.25)");
+        hpLabel = createStatBox("♥ ---", "#ff4444", "rgba(255,68,68,0.25)");
+        xpLabel = createStatBox("★ ---/100", "#4fc3f7", "rgba(79,195,247,0.25)");
+        levelLabel = createStatBox("⭐ LV.---", "#FFD54F", "rgba(255,213,79,0.25)");
 
         leftBox.getChildren().addAll(hpLabel, xpLabel, levelLabel);
         HBox.setHgrow(leftBox, Priority.ALWAYS);
@@ -158,7 +164,7 @@ public class MainMenu extends StackPane {
         currencyBox.setSpacing(12);
         currencyBox.setAlignment(Pos.CENTER_RIGHT);
 
-        goldLabel = createStatBox("💰 500", "#FFD54F", "rgba(255,213,79,0.25)");
+        goldLabel = createStatBox("💰 ---", "#FFD54F", "rgba(255,213,79,0.25)");
 
         currencyBox.getChildren().add(goldLabel);
         bar.getChildren().add(currencyBox);
@@ -204,9 +210,29 @@ public class MainMenu extends StackPane {
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setSpacing(12);
 
+        // 【新游戏】：直接用当前保存的难度开始游戏
         startBtn = createMenuButton("开始游戏", "#4299e1", "#3182ce", e -> {
+            GameData.resetToDefault();  // 核心修复：新游戏必须重置数据
             GameSave.deleteSave();
             gamePanel.startGame(1);
+            setVisible(false);
+            setManaged(false);
+        });
+
+        // 【继续游戏】：有存档时才显示，不重置数据直接继续
+        continueBtn = createMenuButton("继续游戏", "#48bb78", "#38a169", e -> {
+            // 不重置数据，直接恢复战场
+            gamePanel.continueGame();
+            setVisible(false);
+            setManaged(false);
+        });
+
+        // 【无尽模式】：重置数据后启动无尽模式
+        endlessBtn = createMenuButton("无尽模式", "#ed8936", "#dd6b20", e -> {
+            GameData.resetToDefault();  // 无尽模式也要重置数据
+            GameData.isEndless = true;  // 标记为无尽模式
+            GameSave.deleteSave();
+            gamePanel.startEndlessGame();
             setVisible(false);
             setManaged(false);
         });
@@ -218,14 +244,16 @@ public class MainMenu extends StackPane {
         });
 
         shopBtn = createMenuButton("游戏商城", "#ecc94b", "#d69e2e", e -> {
-            // 商城仅在正式游戏模式中可用
-            if (gamePanel.getGameState() == enums.GameState.PLAYING || gamePanel.getGameState() == enums.GameState.PAUSED) {
-                gamePanel.showShopFromPause();
-            } else {
-                gamePanel.getShopOverlay().showToast("请先开始游戏再进入商城！", true);
-            }
+            // 商城始终可访问，无论游戏是否开始
             setVisible(false);
             setManaged(false);
+            if (gamePanel.getGameState() == enums.GameState.PLAYING || gamePanel.getGameState() == enums.GameState.PAUSED) {
+                // 游戏中打开，从暂停进入
+                gamePanel.showShopFromPause();
+            } else {
+                // 主菜单打开，使用默认值
+                gamePanel.showShopFromMenu();
+            }
         });
 
         leaderboardBtn = createMenuButton("排行榜", "#9f7aea", "#805ad5", e -> {
@@ -244,31 +272,52 @@ public class MainMenu extends StackPane {
             System.exit(0);
         });
 
-        btnBox.getChildren().addAll(startBtn, difficultyBtn, shopBtn, leaderboardBtn, settingsBtn, exitBtn);
+        btnBox.getChildren().addAll(startBtn, continueBtn, endlessBtn, difficultyBtn, shopBtn, leaderboardBtn, settingsBtn, exitBtn);
 
         area.getChildren().addAll(titleLabel, btnBox);
         return area;
     }
 
-    /** 标题呼吸发光特效 */
+    /** 标题呼吸发光特效 — 霓虹光效 */
     private void setupTitleAnimation(Label titleLabel) {
-        DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.color(0.1, 0.3, 0.6, 0.5));
-        shadow.setRadius(8);
-        shadow.setOffsetY(2);
+        DropShadow shadow1 = new DropShadow();
+        shadow1.setColor(Color.web("#64b5f6"));
+        shadow1.setRadius(20);
+        shadow1.setOffsetX(0);
+        shadow1.setOffsetY(0);
+
+        DropShadow shadow2 = new DropShadow();
+        shadow2.setColor(Color.web("#42a5f5"));
+        shadow2.setRadius(10);
+        shadow2.setOffsetX(0);
+        shadow2.setOffsetY(0);
 
         Timeline anim = new Timeline(
             new KeyFrame(Duration.ZERO,
-                new KeyValue(shadow.radiusProperty(), 6),
-                new KeyValue(shadow.colorProperty(), Color.color(0.1, 0.3, 0.6, 0.3))),
+                new KeyValue(shadow1.radiusProperty(), 15),
+                new KeyValue(shadow1.colorProperty(), Color.web("#64b5f6", 0.4)),
+                new KeyValue(shadow2.radiusProperty(), 8),
+                new KeyValue(shadow2.colorProperty(), Color.web("#42a5f5", 0.5))),
             new KeyFrame(Duration.seconds(2.5),
-                new KeyValue(shadow.radiusProperty(), 14),
-                new KeyValue(shadow.colorProperty(), Color.color(0.2, 0.5, 0.9, 0.6)))
+                new KeyValue(shadow1.radiusProperty(), 28),
+                new KeyValue(shadow1.colorProperty(), Color.web("#64b5f6", 0.7)),
+                new KeyValue(shadow2.radiusProperty(), 14),
+                new KeyValue(shadow2.colorProperty(), Color.web("#42a5f5", 0.8)))
         );
         anim.setCycleCount(Timeline.INDEFINITE);
         anim.setAutoReverse(true);
 
-        titleLabel.setEffect(shadow);
+        // 组合两个阴影
+        javafx.scene.effect.InnerShadow inner = new javafx.scene.effect.InnerShadow();
+        inner.setColor(Color.web("#ffffff", 0.1));
+        inner.setRadius(3);
+        inner.setOffsetX(0);
+        inner.setOffsetY(-1);
+
+        javafx.scene.effect.Glow glow = new javafx.scene.effect.Glow(0.3);
+
+        // 使用 Group 来组合多个效果
+        titleLabel.setEffect(shadow1);
         anim.play();
     }
 
@@ -334,6 +383,35 @@ public class MainMenu extends StackPane {
         return btn;
     }
 
+    /** 启用商城按钮（游戏开始后调用） */
+    public void enableShopButton() {
+        if (shopBtn != null) {
+            shopBtn.setOpacity(1.0);
+        }
+    }
+
+    /** 禁用商城按钮（返回主菜单时调用） */
+    public void disableShopButton() {
+        if (shopBtn != null) {
+            shopBtn.setOpacity(0.5);
+        }
+    }
+
+    /** 同步顶部数据标签：从全局 GameData 读取最新数据 */
+    public void updateTopLabels() {
+        hpLabel.setText("♥ " + GameData.hp);
+        xpLabel.setText("★ " + GameData.exp + "/100");
+        levelLabel.setText("⭐ LV." + GameData.level);
+        goldLabel.setText("💰 " + GameData.gold);
+        System.out.println("[主菜单UI刷新] HP=" + GameData.hp + " 经验=" + GameData.exp
+            + " 等级=" + GameData.level + " 金币=" + GameData.gold);
+    }
+
+    /** 强制刷新主菜单 UI（返回主菜单时调用） */
+    public void refreshUI() {
+        updateTopLabels();
+    }
+
     /** 颜色变亮辅助方法 */
     private String lightenColor(String hex) {
         try {
@@ -350,17 +428,40 @@ public class MainMenu extends StackPane {
 
     /** 显示菜单并播放入场动画 */
     public void show() {
+        // 1. 强行赋予固定尺寸与激活渲染
+        setPrefSize(WIDTH, HEIGHT);
+        setMinSize(WIDTH, HEIGHT);
+        setMaxSize(WIDTH, HEIGHT);
         setVisible(true);
         setManaged(true);
+        setOpacity(1.0);
+        toFront(); // 强制提升到 StackPane 最顶层
+
+        // 2. 刷新子组件的显示状态
+        backgroundLayer.setVisible(true);
+        backgroundLayer.setManaged(true);
+        uiLayer.setVisible(true);
+        uiLayer.setManaged(true);
+
+        // 3. 确保所有按钮可见
+        Button[] buttons = {startBtn, continueBtn, endlessBtn, difficultyBtn, shopBtn, leaderboardBtn, settingsBtn, exitBtn};
+        for (Button btn : buttons) {
+            btn.setVisible(true);
+            btn.setManaged(true);
+            btn.setOpacity(0);
+            btn.setTranslateY(25);
+        }
+
+        // 继续游戏按钮：有存档时才显示
+        boolean hasSave = GameSave.hasSave();
+        continueBtn.setVisible(hasSave);
+        continueBtn.setManaged(hasSave);
 
         // 按钮依次淡入 + 上移
         SequentialTransition anim = new SequentialTransition();
 
-        Button[] buttons = {startBtn, difficultyBtn, shopBtn, leaderboardBtn, settingsBtn, exitBtn};
         for (int i = 0; i < buttons.length; i++) {
             Button btn = buttons[i];
-            btn.setOpacity(0);
-            btn.setTranslateY(25);
 
             ParallelTransition pt = new ParallelTransition();
 
@@ -376,5 +477,8 @@ public class MainMenu extends StackPane {
             anim.getChildren().add(pt);
         }
         anim.play();
+
+        // 核心修复：主菜单显示时强制刷新 UI，同步 GameData 初始值
+        refreshUI();
     }
 }

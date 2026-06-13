@@ -5,6 +5,7 @@ import entity.Projectile;
 import map.GameMap;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
 import java.util.List;
@@ -26,8 +27,13 @@ public abstract class Tower {
     protected long lastFireTime;
     protected Monster currentTarget;
     protected Color color;
+    protected main.GamePanel gamePanel; // 用于触发视觉效果
 
-    public Tower(int row, int col, int pixelX, int pixelY) {
+    // 贴图
+    protected Image texture;
+    protected int size = 20; // 防御塔渲染尺寸
+
+    public Tower(int row, int col, int pixelX, int pixelY, String textureName) {
         this.row = row;
         this.col = col;
         this.pixelX = pixelX;
@@ -35,6 +41,29 @@ public abstract class Tower {
         this.level = 1;
         this.lastFireTime = 0;
         this.currentTarget = null;
+
+        // 预加载贴图（只在构造时加载一次，避免每帧卡顿）
+        if (textureName != null && !textureName.isEmpty()) {
+            try {
+                String path = "/images/towers/" + textureName + ".png";
+                java.io.InputStream is = getClass().getResourceAsStream(path);
+                if (is != null) {
+                    this.texture = new Image(is);
+                    is.close();
+                    System.out.println("[贴图加载] 防御塔=" + getType() + " 路径=" + path + " 成功");
+                } else {
+                    System.out.println("[贴图加载] 防御塔=" + getType() + " 路径=" + path + " 未找到，使用兜底图形");
+                    this.texture = null;
+                }
+            } catch (Exception e) {
+                System.out.println("[贴图加载] 防御塔=" + getType() + " 加载失败: " + e.getMessage());
+                this.texture = null;
+            }
+        }
+    }
+
+    public void setGamePanel(main.GamePanel panel) {
+        this.gamePanel = panel;
     }
 
     /**
@@ -46,6 +75,12 @@ public abstract class Tower {
             lastFireTime = System.currentTimeMillis();
             Projectile proj = createProjectile(currentTarget);
             projectiles.add(proj);
+
+            // 闪电塔触发闪电特效
+            if (gamePanel != null && getType().equals("LIGHTNING")) {
+                gamePanel.addLightningEffect(pixelX, pixelY, currentTarget.getX(), currentTarget.getY(), Color.web("#9664ff"));
+            }
+
             System.out.println("[防御塔开火] 类型=" + getType() + " 目标=" + currentTarget.getType()
                 + " 伤害=" + damage + " 坐标=(" + pixelX + "," + pixelY + ")");
         }
@@ -104,10 +139,16 @@ public abstract class Tower {
     }
 
     public void render(GraphicsContext gc) {
-        // 塔身
-        gc.setFill(color);
-        int size = 20 + level * 4;
-        gc.fillOval(pixelX - size / 2, pixelY - size / 2, size, size);
+        int renderSize = size + level * 4;
+
+        // 防御塔贴图绘制（优先使用图片，找不到则用兜底图形）
+        if (texture != null) {
+            gc.drawImage(texture, pixelX - renderSize / 2, pixelY - renderSize / 2, renderSize, renderSize);
+        } else {
+            // 兜底：彩色圆圈
+            gc.setFill(color);
+            gc.fillOval(pixelX - renderSize / 2, pixelY - renderSize / 2, renderSize, renderSize);
+        }
 
         // 等级标记
         gc.setFill(Color.WHITE);
@@ -134,6 +175,7 @@ public abstract class Tower {
     public double getRange() { return range; }
     public int getDamage() { return damage; }
     public int getBuyCost() { return buyCost; }
+    public long getFireRate() { return fireRate; }
     public void setDamage(int damage) { this.damage = damage; }
     public void setRange(double range) { this.range = range; }
     public void setFireRate(long fireRate) { this.fireRate = fireRate; }

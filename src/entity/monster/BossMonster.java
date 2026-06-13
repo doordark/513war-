@@ -9,8 +9,9 @@ import javafx.scene.paint.Color;
 public class BossMonster extends Monster {
 
     public BossMonster(double x, double y) {
-        super(x, y, 500, 0.5, 10, 50, 100, 5, Color.MAGENTA);
+        super(x, y, 500, 0.5, 10, 50, 100, 5, Color.MAGENTA, "boss");
         this.name = "Boss";
+        this.size = 28; // Boss 更大
     }
 
     @Override
@@ -22,10 +23,14 @@ public class BossMonster extends Monster {
     public void render(GraphicsContext gc) {
         if (!isAlive()) return;
 
-        // Boss 更大
-        int size = 28;
-        gc.setFill(color);
-        gc.fillOval(x - size / 2, y - size / 2, size, size);
+        // Boss 贴图绘制（优先使用图片，找不到则用兜底图形）
+        if (texture != null) {
+            gc.drawImage(texture, x - size / 2, y - size / 2, size, size);
+        } else {
+            // 兜底：彩色圆圈
+            gc.setFill(color);
+            gc.fillOval(x - size / 2, y - size / 2, size, size);
+        }
 
         // 减速效果
         if (slowFactor < 1.0) {

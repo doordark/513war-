@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 public class NormalMonster extends Monster {
 
     public NormalMonster(double x, double y) {
-        super(x, y, 50, 1.2, 0, 10, 15, 1, Color.RED);
+        super(x, y, 50, 1.2, 0, 10, 15, 1, Color.RED, "normal");
         this.name = "普通怪";
     }
 

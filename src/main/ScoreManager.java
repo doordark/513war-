@@ -74,8 +74,9 @@ public class ScoreManager {
     /**
      * 尝试添加新分数。如果进入前 MAX_SCORES 名，返回 true。
      */
-    public boolean tryAddScore(String playerName, int score, int wave, String difficulty) {
-        ScoreEntry newEntry = new ScoreEntry(playerName, score, wave, difficulty);
+    public boolean tryAddScore(String playerName, int score, int wave, String difficulty, boolean isEndless) {
+        String mode = isEndless ? "endless" : "normal";
+        ScoreEntry newEntry = new ScoreEntry(playerName, score, wave, difficulty, mode);
         scores.add(newEntry);
         scores.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
 
@@ -110,8 +111,9 @@ public class ScoreManager {
     // ==================== JSON 序列化 ====================
 
     private String toJsonLine(ScoreEntry entry) {
-        return String.format("{\"name\":\"%s\",\"score\":%d,\"wave\":%d,\"difficulty\":\"%s\"}",
-            escapeJson(entry.getName()), entry.getScore(), entry.getWave(), escapeJson(entry.getDifficulty()));
+        return String.format("{\"name\":\"%s\",\"score\":%d,\"wave\":%d,\"difficulty\":\"%s\",\"mode\":\"%s\"}",
+            escapeJson(entry.getName()), entry.getScore(), entry.getWave(),
+            escapeJson(entry.getDifficulty()), escapeJson(entry.getMode()));
     }
 
     private ScoreEntry parseJsonLine(String line) {
@@ -120,7 +122,9 @@ public class ScoreManager {
             int score = Integer.parseInt(extractJsonValue(line, "score"));
             int wave = Integer.parseInt(extractJsonValue(line, "wave"));
             String difficulty = extractJsonValue(line, "difficulty");
-            return new ScoreEntry(name, score, wave, difficulty);
+            String mode = extractJsonValue(line, "mode");
+            if (mode.isEmpty()) mode = "normal"; // 兼容旧格式
+            return new ScoreEntry(name, score, wave, difficulty, mode);
         } catch (Exception e) {
             System.err.println("[排行榜] 解析失败: " + line);
             return null;

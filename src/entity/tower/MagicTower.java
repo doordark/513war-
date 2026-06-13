@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
 public class MagicTower extends Tower {
 
     public MagicTower(int row, int col, int pixelX, int pixelY) {
-        super(row, col, pixelX, pixelY);
+        super(row, col, pixelX, pixelY, "magic");
         this.name = "魔法塔";
         this.buyCost = 150;
         this.upgradeCosts = new int[]{100, 150};

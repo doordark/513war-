@@ -3,6 +3,7 @@ package entity.monster;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
 import java.util.List;
@@ -29,10 +30,14 @@ public abstract class Monster {
     protected long slowEndTime;     // 减速结束时间戳
     protected String lastHitByTowerType; // 最后一次攻击的塔类型
 
+    // 贴图
+    protected Image texture;
+    protected int size = 16; // 怪物渲染尺寸（直径）
+
     private static int nextId = 0;
 
     public Monster(double x, double y, int maxHp, double speed, int armor,
-                   int rewardGold, int xpReward, int damageToPlayer, Color color) {
+                   int rewardGold, int xpReward, int damageToPlayer, Color color, String textureName) {
         this.id = nextId++;
         this.x = x;
         this.y = y;
@@ -49,6 +54,25 @@ public abstract class Monster {
         this.color = color;
         this.slowFactor = 1.0;
         this.slowEndTime = 0;
+
+        // 预加载贴图（只在构造时加载一次，避免每帧卡顿）
+        if (textureName != null && !textureName.isEmpty()) {
+            try {
+                String path = "/images/enemies/" + textureName + ".png";
+                java.io.InputStream is = getClass().getResourceAsStream(path);
+                if (is != null) {
+                    this.texture = new Image(is);
+                    is.close();
+                    System.out.println("[贴图加载] 怪物=" + getType() + " 路径=" + path + " 成功");
+                } else {
+                    System.out.println("[贴图加载] 怪物=" + getType() + " 路径=" + path + " 未找到，使用兜底图形");
+                    this.texture = null;
+                }
+            } catch (Exception e) {
+                System.out.println("[贴图加载] 怪物=" + getType() + " 加载失败: " + e.getMessage());
+                this.texture = null;
+            }
+        }
 
         System.out.println("[怪物生成] ID=" + id + " 类型=" + getType()
             + " 出生点=(" + String.format("%.1f", x) + ", " + String.format("%.1f", y) + ")"
@@ -161,10 +185,14 @@ public abstract class Monster {
     public void render(GraphicsContext gc) {
         if (!alive) return;
 
-        // 怪物身体
-        int size = 16;
-        gc.setFill(color);
-        gc.fillOval(x - size / 2, y - size / 2, size, size);
+        // 怪物贴图绘制（优先使用图片，找不到则用兜底图形）
+        if (texture != null) {
+            gc.drawImage(texture, x - size / 2, y - size / 2, size, size);
+        } else {
+            // 兜底：彩色圆圈
+            gc.setFill(color);
+            gc.fillOval(x - size / 2, y - size / 2, size, size);
+        }
 
         // 减速效果标记（蓝色光环）
         if (slowFactor < 1.0) {

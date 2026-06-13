@@ -10,10 +10,14 @@ import java.util.List;
 
 /**
  * 游戏地图 —— 管理瓦片网格、路径点和关卡加载。
+ * 4 种难度对应 4 张不同复杂度的地图：
+ *   EASY      → 简单 S 形，路径短，怪物少
+ *   NORMAL    → 双弯折，路径中等
+ *   HARD      → 多弯折蛇形，路径长
+ *   NIGHTMARE → 复杂多回路，路径最长，怪物最多
  */
 public class GameMap {
 
-    // 地图尺寸 — 更细密的网格
     public static final int ROWS = 12;
     public static final int COLS = 20;
     public static final int TILE_SIZE = 48;
@@ -22,8 +26,25 @@ public class GameMap {
     private List<Point2D> waypoints;
 
     // 地图数据 (0=BUILDABLE, 1=PATH, 2=BLOCKED, 3=START, 4=END)
-    // 起点左上 → 终点左下
-    private static final int[][] LEVEL_1 = {
+
+    // ===== 简单模式：S 形短路径 =====
+    private static final int[][] MAP_EASY = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
+    // ===== 普通模式：双弯折 =====
+    private static final int[][] MAP_NORMAL = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
@@ -38,18 +59,70 @@ public class GameMap {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
 
+    // ===== 困难模式：蛇形多弯折 =====
+    private static final int[][] MAP_HARD = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+        {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 4},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
+    // ===== 噩梦模式：超长蛇形路径，来回折返 =====
+    // 路径：(0,1)→右→(18,1)→下→(18,4)→左→(0,4)→下→(0,7)→右→(18,7)→下→(18,10)→终点
+    private static final int[][] MAP_NIGHTMARE = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
     public GameMap() {
         this.grid = new Tile[ROWS][COLS];
         this.waypoints = new ArrayList<>();
     }
 
     /**
-     * 加载关卡地图。
+     * 根据难度加载对应地图。
      */
-    public void loadMap(int level) {
+    public void loadMap(main.GameSettings.Difficulty difficulty) {
         waypoints.clear();
 
-        int[][] data = LEVEL_1;
+        int[][] data;
+        String mapName;
+        switch (difficulty) {
+            case EASY:
+                data = MAP_EASY;
+                mapName = "简单";
+                break;
+            case HARD:
+                data = MAP_HARD;
+                mapName = "困难";
+                break;
+            case NIGHTMARE:
+                data = MAP_NIGHTMARE;
+                mapName = "噩梦";
+                break;
+            default: // NORMAL
+                data = MAP_NORMAL;
+                mapName = "普通";
+                break;
+        }
 
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
@@ -66,9 +139,8 @@ public class GameMap {
             }
         }
 
-        // 从起点追踪到终点，生成正确的路径点
         waypoints = tracePath();
-        System.out.println("[地图加载] 关卡=" + level + " 路径点数量=" + waypoints.size());
+        System.out.println("[地图加载] 难度=" + mapName + " 路径点数量=" + waypoints.size());
         for (int i = 0; i < waypoints.size(); i++) {
             Point2D p = waypoints.get(i);
             System.out.println("  路径点[" + i + "]: (" + String.format("%.0f", p.getX()) + ", " + String.format("%.0f", p.getY()) + ")");
@@ -76,12 +148,15 @@ public class GameMap {
     }
 
     /**
-     * 从起点开始追踪路径到终点，返回正确的路径点序列。
+     * 兼容旧接口：按关卡编号加载（默认使用普通地图）。
      */
+    public void loadMap(int level) {
+        loadMap(main.GameSettings.Difficulty.NORMAL);
+    }
+
     private List<Point2D> tracePath() {
         List<Point2D> path = new ArrayList<>();
 
-        // 找到起点
         int startRow = -1, startCol = -1;
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
@@ -96,54 +171,60 @@ public class GameMap {
 
         if (startRow < 0) return path;
 
-        // 从起点开始追踪
-        int curRow = startRow;
-        int curCol = startCol;
-        int prevRow = -1;
-        int prevCol = -1;
+        // 使用栈式回溯 DFS 寻路，处理 T 形路口和死路
+        int[] dr = {-1, 1, 0, 0};
+        int[] dc = {0, 0, -1, 1};
 
-        while (true) {
-            // 添加当前格子中心点
-            path.add(new Point2D(curCol * TILE_SIZE + TILE_SIZE / 2.0, curRow * TILE_SIZE + TILE_SIZE / 2.0));
+        // 栈：存储 [row, col, 下一个要尝试的方向索引]
+        java.util.Stack<int[]> stack = new java.util.Stack<>();
+        boolean[][] visited = new boolean[ROWS][COLS];
 
-            // 检查是否到达终点
+        stack.push(new int[]{startRow, startCol, 0});
+        visited[startRow][startCol] = true;
+
+        while (!stack.isEmpty()) {
+            int[] top = stack.peek();
+            int curRow = top[0];
+            int curCol = top[1];
+            int dirIdx = top[2];
+
+            // 到达终点
             if (grid[curRow][curCol].getType() == TileType.END) {
-                break;
+                // 构建最终路径
+                for (int[] cell : stack) {
+                    path.add(new Point2D(
+                        cell[1] * TILE_SIZE + TILE_SIZE / 2.0,
+                        cell[0] * TILE_SIZE + TILE_SIZE / 2.0));
+                }
+                return path;
             }
 
-            // 找下一个相邻的路径格子（排除来时的方向）
-            int nextRow = -1, nextCol = -1;
+            // 尝试下一个方向
+            boolean found = false;
+            while (dirIdx < 4) {
+                int nr = curRow + dr[dirIdx];
+                int nc = curCol + dc[dirIdx];
+                dirIdx++;
+                top[2] = dirIdx; // 更新方向索引
 
-            // 四个方向：上、下、左、右
-            int[] dr = {-1, 1, 0, 0};
-            int[] dc = {0, 0, -1, 1};
-
-            for (int i = 0; i < 4; i++) {
-                int nr = curRow + dr[i];
-                int nc = curCol + dc[i];
-
-                // 跳过边界外
                 if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-                // 跳过不是路径的格子
+                if (visited[nr][nc]) continue;
                 TileType t = grid[nr][nc].getType();
                 if (t != TileType.PATH && t != TileType.END) continue;
-                // 跳回来时的方向
-                if (nr == prevRow && nc == prevCol) continue;
 
-                nextRow = nr;
-                nextCol = nc;
+                visited[nr][nc] = true;
+                stack.push(new int[]{nr, nc, 0});
+                found = true;
                 break;
             }
 
-            // 找不到下一个格子，路径断了
-            if (nextRow < 0) break;
-
-            prevRow = curRow;
-            prevCol = curCol;
-            curRow = nextRow;
-            curCol = nextCol;
+            if (!found) {
+                // 死路，回溯
+                stack.pop();
+            }
         }
 
+        System.err.println("[地图加载] 警告：未找到从起点到终点的路径！");
         return path;
     }
 
@@ -189,9 +270,6 @@ public class GameMap {
     public int getRows() { return ROWS; }
     public int getCols() { return COLS; }
 
-    /**
-     * 渲染地图。
-     */
     public void render(GraphicsContext gc) {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {

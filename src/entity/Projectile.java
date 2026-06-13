@@ -123,8 +123,9 @@ public class Projectile {
 
     /**
      * 处理击中事件：对目标造成伤害，如有范围伤害则额外处理。
+     * 返回是否需要播放爆炸特效。
      */
-    public void onHit(List<Monster> monsters) {
+    public boolean onHit(List<Monster> monsters) {
         if (hit && target != null) {
             // 对主目标造成伤害
             applyDamage(target);
@@ -132,8 +133,10 @@ public class Projectile {
             // 范围伤害
             if (splashDamage) {
                 applySplashDamage(monsters);
+                return true; // 需要爆炸特效
             }
         }
+        return false;
     }
 
     public boolean hasHit() {
@@ -154,4 +157,6 @@ public class Projectile {
     public double getY() { return y; }
     public boolean isSplashDamage() { return splashDamage; }
     public Monster getTarget() { return target; }
+    public String getTowerType() { return towerType; }
+    public int getDamage() { return damage; }
 }

@@ -1,28 +1,38 @@
 @echo off
-chcp 65001 >nul
+
 echo ========================================
-echo   Java 2D 塔防游戏 - 一键启动
+echo   Java 2D Tower Defense - Launcher
 echo ========================================
 echo.
 
-REM 检查 Java 是否安装
+REM Check Java
 java -version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [错误] 未检测到 Java，请先安装 JDK 17 或更高版本
+    echo [ERROR] Java not found. Please install JDK 17+.
     pause
     exit /b 1
 )
 
-echo [1/2] 正在编译...
-javac -d out -cp "javafx-sdk-21/lib/*" -sourcepath src src/main/*.java src/entity/*.java src/entity/monster/*.java src/entity/tower/*.java src/enums/*.java src/map/*.java src/wave/*.java
+echo [1/2] Compiling...
+javac -encoding UTF-8 -d out -cp "javafx-sdk-21/lib/*" -sourcepath src src/main/*.java src/main/java/sound/*.java src/entity/*.java src/entity/monster/*.java src/entity/tower/*.java src/enums/*.java src/map/*.java src/wave/*.java
 if %errorlevel% neq 0 (
-    echo [错误] 编译失败！
+    echo [ERROR] Compile failed!
     pause
     exit /b 1
 )
-echo [成功] 编译完成
+echo [OK] Compile done.
+
+REM Copy resources
+if exist resources (
+    xcopy /E /I /Y /Q resources out >nul
+    echo [OK] Resources synced.
+)
 echo.
 
-echo [2/2] 正在启动游戏...
+echo [2/2] Starting game...
 echo.
-java --module-path javafx-sdk-21/lib --add-modules javafx.controls,javafx.fxml -cp out main.GameMain
+java -Dfile.encoding=UTF-8 --module-path javafx-sdk-21/lib --add-modules javafx.controls,javafx.fxml -cp out main.GameMain
+
+echo.
+echo Game closed. Press any key to exit...
+pause

@@ -142,17 +142,31 @@ public class LeaderboardOverlay extends StackPane {
         nameLabel.setTextFill(Color.WHITE);
         nameLabel.setPrefWidth(120);
 
-        // 分数
-        Label scoreLabel = new Label(String.valueOf(entry.getScore()));
-        scoreLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
-        scoreLabel.setTextFill(Color.web("#ffd700"));
+        // 分数/波数
+        Label scoreLabel;
+        if (entry.isEndless()) {
+            scoreLabel = new Label(entry.getScore() + " 波");
+            scoreLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
+            scoreLabel.setTextFill(Color.web("#ff6b3d"));  // 橙色
+        } else {
+            scoreLabel = new Label(String.valueOf(entry.getScore()));
+            scoreLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
+            scoreLabel.setTextFill(Color.web("#ffd700"));
+        }
         scoreLabel.setPrefWidth(80);
 
-        // 波次
-        Label waveLabel = new Label("波次 " + entry.getWave());
-        waveLabel.setFont(Font.font("Microsoft YaHei", 12));
-        waveLabel.setTextFill(Color.color(0.6, 0.65, 0.75));
-        waveLabel.setPrefWidth(80);
+        // 模式/波次
+        Label modeLabel;
+        if (entry.isEndless()) {
+            modeLabel = new Label("无尽模式");
+            modeLabel.setFont(Font.font("Microsoft YaHei", 11));
+            modeLabel.setTextFill(Color.web("#ff6b3d"));
+        } else {
+            modeLabel = new Label("波次 " + entry.getWave());
+            modeLabel.setFont(Font.font("Microsoft YaHei", 12));
+            modeLabel.setTextFill(Color.color(0.6, 0.65, 0.75));
+        }
+        modeLabel.setPrefWidth(80);
 
         // 难度
         Label diffLabel = new Label(entry.getDifficulty());
@@ -160,7 +174,7 @@ public class LeaderboardOverlay extends StackPane {
         diffLabel.setTextFill(Color.color(0.55, 0.6, 0.7));
         diffLabel.setPrefWidth(60);
 
-        row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, waveLabel, diffLabel);
+        row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, modeLabel, diffLabel);
 
         // 卡片背景
         row.setStyle(
