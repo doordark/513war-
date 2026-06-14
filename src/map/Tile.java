@@ -34,7 +34,7 @@ public class Tile {
     private static void loadDoorImage() {
         if (!doorImageLoaded) {
             try {
-                doorImage = new Image("file:image/door .jpg");
+                doorImage = new Image("file:resources/images/door.jpg");
                 doorImageLoaded = true;
             } catch (Exception e) {
                 doorImage = null;

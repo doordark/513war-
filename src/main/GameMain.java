@@ -81,7 +81,7 @@ public class GameMain extends Application {
         gamePanel.getHudRoot().setManaged(false);
 
         // 设置主菜单背景图片
-        gamePanel.getMainMenu().setBackgroundImage("file:image/meau.jpg");
+        gamePanel.getMainMenu().setBackgroundImage("file:resources/images/meau.jpg");
 
         // 创建并启动游戏引擎
         gameEngine = new GameEngine(gamePanel);

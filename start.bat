@@ -14,7 +14,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [1/2] Compiling...
-javac -encoding UTF-8 -d out -cp "javafx-sdk-21/lib/*" -sourcepath src src/main/*.java src/main/java/sound/*.java src/entity/*.java src/entity/monster/*.java src/entity/tower/*.java src/enums/*.java src/map/*.java src/wave/*.java
+javac -encoding UTF-8 -d out -cp "javafx-sdk-21/lib/*" -sourcepath src src/main/*.java src/sound/*.java src/entity/*.java src/entity/monster/*.java src/entity/tower/*.java src/enums/*.java src/map/*.java src/wave/*.java
 if %errorlevel% neq 0 (
     echo [ERROR] Compile failed!
     pause
