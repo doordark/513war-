@@ -27,6 +27,10 @@ public class HudPanel extends VBox {
     private Label hpLabel;
     private Label goldLabel;
     private Label scoreLabel;
+    private Label levelLabel;
+    private StackPane expBarContainer;
+    private Region expBarFill;
+    private Label expBarText;
     private Label waveLabel;
 
     // 左侧：防御塔详情信息卡
@@ -106,8 +110,34 @@ public class HudPanel extends VBox {
         hpLabel = createTopLabel("HP: 20", "#ff6b6b");
         goldLabel = createTopLabel("Gold: 150", "#ffd54f");
         scoreLabel = createTopLabel("Score: 0", "#ffffff");
+        levelLabel = createTopLabel("Lv.1", "#a78bfa");
 
-        leftData.getChildren().addAll(hpLabel, goldLabel, scoreLabel);
+        // 经验进度条容器
+        expBarContainer = new StackPane();
+        expBarContainer.setPrefSize(80, 14);
+        expBarContainer.setMaxSize(80, 14);
+        expBarContainer.setStyle(
+            "-fx-background-color: rgba(255,255,255,0.1);" +
+            "-fx-background-radius: 7;" +
+            "-fx-border-color: rgba(167,139,250,0.3);" +
+            "-fx-border-radius: 7;" +
+            "-fx-border-width: 1;"
+        );
+
+        expBarFill = new Region();
+        expBarFill.setPrefHeight(14);
+        expBarFill.setStyle(
+            "-fx-background-color: linear-gradient(to right, #a78bfa, #7c3aed);" +
+            "-fx-background-radius: 7;"
+        );
+        StackPane.setAlignment(expBarFill, Pos.CENTER_LEFT);
+
+        expBarText = new Label("0/100");
+        expBarText.setStyle("-fx-font-size: 9px; -fx-text-fill: #ffffff; -fx-font-weight: bold;");
+
+        expBarContainer.getChildren().addAll(expBarFill, expBarText);
+
+        leftData.getChildren().addAll(hpLabel, goldLabel, scoreLabel, levelLabel, expBarContainer);
         HBox.setHgrow(leftData, Priority.NEVER);
 
         Region spacer = new Region();
@@ -380,6 +410,15 @@ public class HudPanel extends VBox {
             endGameButton.setManaged(false);
         }
         scoreLabel.setText("Score: " + gamePanel.getScore());
+
+        // 更新等级和经验条
+        int currentLevel = gamePanel.getPlayerLevel();
+        int currentExp = gamePanel.getPlayerXP();
+        int expMax = gamePanel.getXpMax();
+        levelLabel.setText("Lv." + currentLevel);
+        expBarText.setText(currentExp + "/" + expMax);
+        double ratio = expMax > 0 ? (double) currentExp / expMax : 0;
+        expBarFill.setPrefWidth(Math.max(0, Math.min(80, (int) (80 * ratio))));
 
         // 更新塔按钮
         int gold = gamePanel.getPlayerGold();

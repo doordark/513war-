@@ -15,6 +15,7 @@ import entity.LightningEffect;
 import entity.ExplosionEffect;
 import entity.FloatingText;
 import wave.WaveManager;
+import sound.SoundManager;
 import enums.GameState;
 import enums.TowerType;
 import enums.TileType;
@@ -63,6 +64,7 @@ public class GamePanel {
 
     // ==================== 游戏状态 ====================
     private GameState gameState;
+    private GameState previousGameState; // 用于从设置面板返回时恢复状态
 
     // ==================== 玩家资源 ====================
     private int playerGold;
@@ -270,6 +272,9 @@ public class GamePanel {
         // 启用商城按钮
         mainMenu.enableShopButton();
 
+        // 播放 BGM
+        SoundManager.getInstance().playBGM();
+
         System.out.println("[游戏开始] 关卡=" + level + " 金币=" + playerGold + " 生命=" + playerLives);
 
         // 更新 HUD
@@ -333,6 +338,9 @@ public class GamePanel {
         hudPanel.setVisible(true);
         hudPanel.setManaged(true);
         mainMenu.enableShopButton();
+
+        // 播放 BGM
+        SoundManager.getInstance().playBGM();
 
         System.out.println("[继续游戏] 已恢复存档 - 金币=" + playerGold + " 生命=" + playerLives + " 波次=" + savedData.currentWave);
         hudPanel.updateState();
@@ -407,6 +415,9 @@ public class GamePanel {
         hudPanel.setVisible(true);
         hudPanel.setManaged(true);
         mainMenu.enableShopButton();
+
+        // 播放 BGM
+        SoundManager.getInstance().playBGM();
 
         System.out.println("[无尽模式开始] 金币=" + playerGold + " 生命=" + playerLives);
         hudPanel.updateState();
@@ -722,6 +733,9 @@ public class GamePanel {
         }
         gameState = GameState.MENU;
 
+        // 停止 BGM
+        SoundManager.getInstance().stopBGM();
+
         // 2. 获取当前时间作为默认名字
         java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         String defaultName = java.time.LocalDateTime.now().format(dtf);
@@ -800,6 +814,24 @@ public class GamePanel {
         System.out.println("[继续] 游戏已继续");
     }
 
+    public void resumeFromOverlay() {
+        gameState = previousGameState; // 恢复到打开设置前的状态
+        if (gameState == GameState.MENU) {
+            // 隐藏 HUD
+            hudPanel.setVisible(false);
+            hudPanel.setManaged(false);
+            // 显示主菜单
+            mainMenu.refreshUI();
+            mainMenu.show();
+            mainMenu.toFront();
+        } else if (gameState == GameState.PLAYING) {
+            // 从游戏中返回，确保 HUD 可见
+            hudPanel.setVisible(true);
+            hudPanel.setManaged(true);
+        }
+        System.out.println("[返回] 从设置面板返回，状态=" + gameState);
+    }
+
     public void pauseGame() {
         gameState = GameState.PAUSED;
         pauseOverlay.show();
@@ -810,6 +842,9 @@ public class GamePanel {
     }
 
     public void returnToMenu() {
+        // 停止 BGM
+        SoundManager.getInstance().stopBGM();
+
         // 将游戏面板数据同步回全局 GameData
         GameData.hp = playerLives;
         GameData.gold = playerGold;
@@ -850,11 +885,13 @@ public class GamePanel {
     }
 
     public void showSettingsFromPause() {
+        previousGameState = gameState; // 保存当前状态（PAUSED）
         gameState = GameState.SETTINGS;
         settingsOverlay.show();
     }
 
     public void showSettingsFromMenu() {
+        previousGameState = gameState; // 保存当前状态（MENU）
         gameState = GameState.SETTINGS;
         settingsOverlay.show();
     }

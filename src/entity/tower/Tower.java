@@ -3,6 +3,7 @@ package entity.tower;
 import entity.monster.Monster;
 import entity.Projectile;
 import map.GameMap;
+import sound.SoundManager;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -31,7 +32,7 @@ public abstract class Tower {
 
     // 贴图
     protected Image texture;
-    protected int size = 20; // 防御塔渲染尺寸
+    protected int size = 54; // 防御塔渲染尺寸（接近格子大小 48px）
 
     public Tower(int row, int col, int pixelX, int pixelY, String textureName) {
         this.row = row;
@@ -75,6 +76,9 @@ public abstract class Tower {
             lastFireTime = System.currentTimeMillis();
             Projectile proj = createProjectile(currentTarget);
             projectiles.add(proj);
+
+            // 播放开火音效
+            SoundManager.getInstance().playTowerFire(getType());
 
             // 闪电塔触发闪电特效
             if (gamePanel != null && getType().equals("LIGHTNING")) {

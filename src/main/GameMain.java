@@ -86,6 +86,10 @@ public class GameMain extends Application {
         // 创建并启动游戏引擎
         gameEngine = new GameEngine(gamePanel);
         gamePanel.setGameEngine(gameEngine);
+
+        // 在 JavaFX 应用线程上提前初始化 SoundManager（确保 MediaPlayer 正确创建）
+        sound.SoundManager.getInstance();
+
         gameEngine.start();
 
         // 窗口关闭时清理

@@ -11,7 +11,7 @@ public class BossMonster extends Monster {
     public BossMonster(double x, double y) {
         super(x, y, 500, 0.5, 10, 50, 100, 5, Color.MAGENTA, "boss");
         this.name = "Boss";
-        this.size = 28; // Boss 更大
+        this.size = 60; // Boss 更大
     }
 
     @Override

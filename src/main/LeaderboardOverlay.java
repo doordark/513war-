@@ -145,7 +145,7 @@ public class LeaderboardOverlay extends StackPane {
         // 分数/波数
         Label scoreLabel;
         if (entry.isEndless()) {
-            scoreLabel = new Label(entry.getScore() + " 波");
+            scoreLabel = new Label(entry.getWave() + " 波");
             scoreLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
             scoreLabel.setTextFill(Color.web("#ff6b3d"));  // 橙色
         } else {

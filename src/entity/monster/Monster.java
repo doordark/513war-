@@ -32,7 +32,7 @@ public abstract class Monster {
 
     // 贴图
     protected Image texture;
-    protected int size = 16; // 怪物渲染尺寸（直径）
+    protected int size = 50; // 怪物渲染尺寸（直径）
 
     private static int nextId = 0;
 

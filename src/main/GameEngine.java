@@ -42,6 +42,9 @@ public class GameEngine {
                 // 更新游戏逻辑
                 gamePanel.updateGame();
 
+                // 更新 BGM 循环
+                sound.SoundManager.getInstance().updateBGM();
+
                 // 请求 Canvas 重绘
                 gamePanel.render();
             }

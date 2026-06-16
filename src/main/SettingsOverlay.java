@@ -13,6 +13,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import sound.SoundManager;
 import javafx.util.Duration;
 
 /**
@@ -34,8 +35,6 @@ public class SettingsOverlay extends StackPane {
     // 控件
     private Slider bgmSlider;
     private Slider sfxSlider;
-    private Button chineseBtn;
-    private Button englishBtn;
     private Button backBtn;
 
     public SettingsOverlay(GamePanel gamePanel) {
@@ -86,19 +85,18 @@ public class SettingsOverlay extends StackPane {
         // BGM 音量
         HBox bgmRow = createSettingRow("背景音乐", createVolumeSlider(gamePanel.getSettings().getBgmVolume(), (obs, oldVal, newVal) -> {
             gamePanel.getSettings().setBgmVolume(newVal.doubleValue());
+            SoundManager.getInstance().setBgmVolume(newVal.doubleValue());
             System.out.println("[设置] BGM音量=" + (int)(newVal.doubleValue() * 100) + "%");
         }));
 
         // 音效音量
         HBox sfxRow = createSettingRow("音效", createVolumeSlider(gamePanel.getSettings().getSfxVolume(), (obs, oldVal, newVal) -> {
             gamePanel.getSettings().setSfxVolume(newVal.doubleValue());
+            SoundManager.getInstance().setSfxVolume(newVal.doubleValue());
             System.out.println("[设置] 音效音量=" + (int)(newVal.doubleValue() * 100) + "%");
         }));
 
-        // 语言
-        HBox langRow = createLangRow();
-
-        settingsBox.getChildren().addAll(bgmRow, sfxRow, langRow);
+        settingsBox.getChildren().addAll(bgmRow, sfxRow);
 
         // 底部提示
         Label hintLabel = new Label("设置会自动保存");
@@ -108,9 +106,9 @@ public class SettingsOverlay extends StackPane {
 
         // 返回按钮
         backBtn = createBackButton("← 返回", e -> {
-            gamePanel.returnToMenuFromOverlay();
             setVisible(false);
             setManaged(false);
+            gamePanel.resumeFromOverlay();
         });
 
         uiLayer.getChildren().addAll(titleArea, settingsBox, hintLabel, backBtn);
@@ -173,82 +171,6 @@ public class SettingsOverlay extends StackPane {
         return slider;
     }
 
-    /** 创建语言选择行 */
-    private HBox createLangRow() {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER);
-        row.setSpacing(30);
-        row.setPadding(new Insets(5, 0, 5, 0));
-
-        Label lbl = new Label("语言");
-        lbl.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
-        lbl.setTextFill(Color.color(0.8, 0.85, 1, 0.9));
-        lbl.setPrefWidth(100);
-        lbl.setAlignment(Pos.CENTER_RIGHT);
-
-        HBox btnBox = new HBox();
-        btnBox.setSpacing(12);
-
-        boolean isChinese = gamePanel.getSettings().getLanguage() == GameSettings.Language.CHINESE;
-
-        chineseBtn = createLangButton("中文", isChinese, e -> {
-            gamePanel.getSettings().setLanguage(GameSettings.Language.CHINESE);
-            System.out.println("[设置] 语言=中文");
-            updateLangButtons();
-        });
-
-        englishBtn = createLangButton("English", !isChinese, e -> {
-            gamePanel.getSettings().setLanguage(GameSettings.Language.ENGLISH);
-            System.out.println("[设置] 语言=English");
-            updateLangButtons();
-        });
-
-        btnBox.getChildren().addAll(chineseBtn, englishBtn);
-        row.getChildren().addAll(lbl, btnBox);
-        return row;
-    }
-
-    /** 创建语言按钮 */
-    private Button createLangButton(String text, boolean selected, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
-        Button btn = new Button(text);
-        btn.setPrefSize(120, 40);
-        btn.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 14));
-        btn.setCursor(javafx.scene.Cursor.HAND);
-
-        updateButtonStyle(btn, selected);
-
-        btn.setOnAction(handler);
-        return btn;
-    }
-
-    private void updateButtonStyle(Button btn, boolean selected) {
-        if (selected) {
-            btn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #4299e1, #3182ce); " +
-                "-fx-background-radius: 10; " +
-                "-fx-border-color: rgba(255,255,255,0.4); " +
-                "-fx-border-radius: 10; " +
-                "-fx-border-width: 1.5; " +
-                "-fx-text-fill: white; " +
-                "-fx-effect: dropshadow(gaussian, rgba(66,153,225,0.4), 8, 0, 0, 0);");
-        } else {
-            btn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #2d3748, #1a202c); " +
-                "-fx-background-radius: 10; " +
-                "-fx-border-color: rgba(255,255,255,0.1); " +
-                "-fx-border-radius: 10; " +
-                "-fx-border-width: 1; " +
-                "-fx-text-fill: rgba(255,255,255,0.6); " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);");
-        }
-    }
-
-    private void updateLangButtons() {
-        boolean isChinese = gamePanel.getSettings().getLanguage() == GameSettings.Language.CHINESE;
-        updateButtonStyle(chineseBtn, isChinese);
-        updateButtonStyle(englishBtn, !isChinese);
-    }
-
     /** 创建返回按钮 */
     private Button createBackButton(String text, javafx.event.EventHandler<javafx.event.ActionEvent> handler) {
         Button btn = new Button(text);
@@ -308,7 +230,6 @@ public class SettingsOverlay extends StackPane {
     public void show() {
         setVisible(true);
         setManaged(true);
-        updateLangButtons();
 
         SequentialTransition anim = new SequentialTransition();
 

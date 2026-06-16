@@ -31,7 +31,7 @@ echo.
 
 echo [2/2] Starting game...
 echo.
-java -Dfile.encoding=UTF-8 --module-path javafx-sdk-21/lib --add-modules javafx.controls,javafx.fxml -cp out main.GameMain
+java -Dfile.encoding=UTF-8 --module-path javafx-sdk-21/lib --add-modules javafx.controls,javafx.fxml,javafx.media -cp out main.GameMain
 
 echo.
 echo Game closed. Press any key to exit...

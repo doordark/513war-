@@ -2,6 +2,7 @@ package wave;
 
 import entity.monster.*;
 import main.GameSettings;
+import sound.SoundManager;
 
 import javafx.geometry.Point2D;
 
@@ -245,6 +246,10 @@ public class WaveManager {
 
         monsters.add(m);
         spawnedInWave++;
+
+        // 播放怪物出场音效
+        SoundManager.getInstance().playMonsterSpawn(entry.getType());
+
         System.out.println("[怪物生成] 波次" + currentWave + " 第" + spawnedInWave + "/" + wave.getTotalCount()
             + " 个: " + entry.getType() + " HP=" + m.getMaxHp() + " 速度=" + String.format("%.2f", m.getSpeed()));
     }
@@ -265,6 +270,10 @@ public class WaveManager {
 
         monsters.add(m);
         spawnedInWave++;
+
+        // 播放怪物出场音效
+        SoundManager.getInstance().playMonsterSpawn(type);
+
         System.out.println("[怪物生成(无尽)] 波次" + currentWave + " 第" + spawnedInWave + "/" + getEndlessWaveCount()
             + " 个: " + type + " HP=" + m.getMaxHp() + " 速度=" + String.format("%.2f", m.getSpeed())
             + " 金币=" + m.getRewardGold());

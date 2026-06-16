@@ -1,7 +1,7 @@
 package main;
 
 /**
- * 游戏设置管理器 —— 管理音量、语言、难度等全局设置。
+ * 游戏设置管理器 —— 管理音量、难度等全局设置。
  */
 public class GameSettings {
 
@@ -9,20 +9,8 @@ public class GameSettings {
     private double bgmVolume;
     private double sfxVolume;
 
-    // 语言设置
-    private Language language;
-
     // 难度设置
     private Difficulty difficulty;
-
-    public enum Language {
-        CHINESE("中文"),
-        ENGLISH("English");
-
-        private final String displayName;
-        Language(String displayName) { this.displayName = displayName; }
-        public String getDisplayName() { return displayName; }
-    }
 
     public enum Difficulty {
         EASY("简单", 1.0, 0.8),
@@ -48,7 +36,6 @@ public class GameSettings {
     public GameSettings() {
         this.bgmVolume = 0.5;
         this.sfxVolume = 0.7;
-        this.language = Language.CHINESE;
         this.difficulty = Difficulty.NORMAL;
     }
 
@@ -58,9 +45,6 @@ public class GameSettings {
 
     public double getSfxVolume() { return sfxVolume; }
     public void setSfxVolume(double v) { this.sfxVolume = Math.max(0, Math.min(1, v)); }
-
-    public Language getLanguage() { return language; }
-    public void setLanguage(Language l) { this.language = l; }
 
     public Difficulty getDifficulty() { return difficulty; }
     public void setDifficulty(Difficulty d) { this.difficulty = d; }
